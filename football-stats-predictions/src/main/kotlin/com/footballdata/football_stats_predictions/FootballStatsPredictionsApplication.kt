@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class FootballStatsPredictionsApplication
 
 fun main(args: Array<String>) {
-	runApplication<FootballStatsPredictionsApplication>(*args)
+    runApplication<FootballStatsPredictionsApplication>(*args)
 }
