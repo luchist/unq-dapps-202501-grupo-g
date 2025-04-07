@@ -6,7 +6,7 @@ class Match(
     var homeTeam: Team,
     var awayTeam: Team
 ) {
-    fun generateMatchPredicion() {
+    fun generateMatchPrediction() {
         throw NotImplementedError()
     }
 }
