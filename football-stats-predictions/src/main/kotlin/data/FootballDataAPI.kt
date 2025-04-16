@@ -1,12 +1,17 @@
 package data
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
 import java.net.HttpURLConnection
 import java.net.URL
 
-class FootballDataAPI() : StatisticsProvider {
 
-    val apiUrl = "https://api.football-data.org/"
+@Component
+class FootballDataAPI(
+    @Value("\${integration.football.api.url}") val apiUrl: String,
+    @Value("\${integration.football.api.apikey}") val apiKey: String
+) : StatisticsProvider {
 
     override fun getTeamStatistics(teamName: String): TeamStatistics {
         TODO("Not yet implemented")
@@ -40,8 +45,7 @@ class FootballDataAPI() : StatisticsProvider {
         connection.apply {
             requestMethod = "GET"
             setRequestProperty("Accept", "application/json")
-            setRequestProperty("X-Auth-Token", "APIKEY")
-            // TODO: pasar la API KEY de manera segura
+            setRequestProperty("X-Auth-Token", apiKey)
         }
 
         val response = connection.inputStream.bufferedReader().use { it.readText() }
