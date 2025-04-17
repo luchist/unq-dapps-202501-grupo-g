@@ -5,7 +5,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "1.9.25"
     id("jacoco")
-    id("org.sonarqube") version "3.5.0.2730"
+    id("org.sonarqube") version "6.0.1.5171"
 }
 
 group = "com.footballdata"
@@ -39,6 +39,14 @@ dependencies {
 kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict")
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "luchist_unq-dapps-202501-grupo-g")
+        property("sonar.organization", "luchist-1")
+        property("sonar.host.url", "https://sonarcloud.io")
     }
 }
 
