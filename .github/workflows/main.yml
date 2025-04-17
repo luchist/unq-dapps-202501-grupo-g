@@ -42,4 +42,5 @@ jobs:
         working-directory: ./football-stats-predictions
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
         run: ./gradlew build sonar --info
