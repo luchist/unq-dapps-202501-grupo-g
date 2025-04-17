@@ -4,6 +4,8 @@ plugins {
     id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "1.9.25"
+    id("jacoco")
+    id("org.sonarqube") version "6.0.1.5171"
 }
 
 group = "com.footballdata"
@@ -37,6 +39,42 @@ dependencies {
 kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict")
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "luchist_unq-dapps-202501-grupo-g")
+        property("sonar.organization", "luchist-1")
+        property("sonar.host.url", "https://sonarcloud.io")
+    }
+}
+
+tasks.test {
+    //sets the spring profile to local if not running in CI
+    val isCI = (System.getenv("CI") != null)
+    systemProperties(
+        "spring.profiles.active" to (if (isCI) "" else "local")
+    )
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.5".toBigDecimal()
+            }
+        }
     }
 }
 
