@@ -1,6 +1,6 @@
 package com.footballdata.football_stats_predictions
 
-import model.PlayerBuilder
+import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 

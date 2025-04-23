@@ -5,7 +5,7 @@ import org.springframework.boot.runApplication
 import org.springframework.context.annotation.ComponentScan
 
 @SpringBootApplication
-@ComponentScan(basePackages = ["com.footballdata.football_stats_predictions", "data"])
+@ComponentScan(basePackages = ["com.footballdata.football_stats_predictions"])
 class FootballStatsPredictionsApplication
 
 fun main(args: Array<String>) {

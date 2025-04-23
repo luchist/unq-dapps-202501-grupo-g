@@ -1,4 +1,4 @@
-package data
+package com.footballdata.football_stats_predictions.data
 
 class WhoScoredScrapper(
     var urlClient: String

@@ -1,6 +1,6 @@
 package com.footballdata.football_stats_predictions
 
-import data.FootballDataAPI
+import com.footballdata.football_stats_predictions.data.FootballDataAPI
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
