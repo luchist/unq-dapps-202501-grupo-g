@@ -1,4 +1,4 @@
-package model
+package com.footballdata.football_stats_predictions.model
 
 class Match(
     val league: String,

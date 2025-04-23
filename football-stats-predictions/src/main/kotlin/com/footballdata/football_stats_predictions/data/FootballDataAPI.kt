@@ -1,4 +1,4 @@
-package data
+package com.footballdata.football_stats_predictions.data
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Value
@@ -38,9 +38,9 @@ class FootballDataAPI(
     }
 
     fun getTeamComposition(teamName: String): List<Player> {
-        // TODO: Alguna forma de mapear el nombre del equipo al id en football-data con algun mapping
+
         val requestURL = apiUrl + "v4/teams/$teamName/"
-        // TODO: alguna forma copada de manejar las urls con springboot
+
         val connection = URL(requestURL).openConnection() as HttpURLConnection
         connection.apply {
             requestMethod = "GET"
@@ -64,7 +64,7 @@ class FootballDataAPI(
         }
     }
 
-    // TODO: Diferencias entre esta clase data y la clase de modelo Player? Como convertimos los objetos de una a otra?
+
     data class Player(
         val id: Long,
         val name: String,
