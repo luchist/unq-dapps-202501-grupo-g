@@ -19,7 +19,8 @@ RUN chmod +x gradlew && \
 COPY . .
 
 # Construimos la aplicación
-RUN ./gradlew clean build --no-daemon
+RUN chmod +x gradlew && \
+    ./gradlew clean build --no-daemon
 
 # Etapa de ejecución
 FROM eclipse-temurin:17-jdk-alpine
