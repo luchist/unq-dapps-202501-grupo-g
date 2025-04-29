@@ -13,14 +13,14 @@ class SecurityConfig {
         http
             .authorizeHttpRequests {
                 it.requestMatchers(
-                    "/v3/api-docs/**",    // Allow access to OpenAPI docs
-                    "/swagger-ui/**",     // Allow access to Swagger UI
-                    "/swagger-ui.html",
-                    "/api/v1/users"
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
                 ).permitAll()
-                it.anyRequest().authenticated() // Secure other endpoints
+                it.anyRequest().authenticated()
             }
-            .csrf { it.disable() }  // Disable CSRF for APIs
+            .csrf { it.disable() }
+            .httpBasic {}
         return http.build()
     }
 }
