@@ -1,1 +1,32 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=luchist_unq-dapps-202501-grupo-g&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=luchist_unq-dapps-202501-grupo-g)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=luchist_unq-dapps-202501-grupo-g&metric=coverage)](https://sonarcloud.io/summary/new_code?id=luchist_unq-dapps-202501-grupo-g)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=luchist_unq-dapps-202501-grupo-g&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=luchist_unq-dapps-202501-grupo-g)
+
 # unq-dapps-202501-grupo-g
+
+- [SonarCloud](https://sonarcloud.io/project/overview?id=luchist_unq-dapps-202501-grupo-g)
+- [Render](https://unq-dapps-202501-grupo-g.onrender.com)
+
+### Entrega Nro. 1
+
+**Core**
+
+- Creación de repositorios GitHub ✅
+- Configuración en GitHubActions ✅
+- Build corriendo y SUCCESS ✅
+- SonarCloud (Registrar el proyecto y con issues menor a 10) ✅
+- Deploy automático en Render usando Git Actions de GitHub ❌
+- Clean Code según la materia (todo en Ingles) ✅
+- JWT implementado ❌
+- Configuracion de https://swagger.io/ en el back-API  (v3) ✅
+
+**Modelo**
+
+- Modelo segun necesidad de enpoints ✅
+- Testing automático unitario según las pautas de la materia ✅
+
+ 
+**Funcionalidad**
+
+- Creacion de usuario y ApiKEY para acceder al resto de los endpoints ❌
+- Endpoint de jugadores de un equipo ✅
