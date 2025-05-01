@@ -13,14 +13,14 @@ COPY gradlew .
 
 # Descargamos dependencias
 RUN chmod +x gradlew && \
-    ./gradlew dependencies --no-daemon || return 0
+    ./gradlew dependencies --no-daemon
 
 # Copiamos el resto del código
 COPY . .
 
 # Construimos la aplicación
 RUN chmod +x gradlew && \
-    ./gradlew clean build --no-daemon
+    ./gradlew clean build --no-daemon --scan
 
 # Etapa de ejecución
 FROM eclipse-temurin:17-jdk-alpine
