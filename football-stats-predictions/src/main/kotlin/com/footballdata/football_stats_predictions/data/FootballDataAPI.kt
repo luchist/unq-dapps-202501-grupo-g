@@ -41,9 +41,6 @@ class FootballDataAPI(
 
         val requestURL = apiUrl + "v4/teams/$teamName/"
 
-        println("GET TEAM COMPOSITION URL")
-        println(requestURL)
-
         val connection = URL(requestURL).openConnection() as HttpURLConnection
         connection.apply {
             requestMethod = "GET"
@@ -51,14 +48,10 @@ class FootballDataAPI(
             setRequestProperty("X-Auth-Token", apiKey)
         }
 
-        println("CONNECTION")
-
         val response = connection.inputStream.bufferedReader().use { it.readText() }
         val mapper = ObjectMapper()
         val rootNode = mapper.readTree(response)
         val squadNode = rootNode.get("squad")
-
-        println("RETURN")
 
         return squadNode.map { playerNode ->
             Player(
