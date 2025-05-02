@@ -25,7 +25,6 @@
 - Modelo segun necesidad de enpoints ✅
 - Testing automático unitario según las pautas de la materia ✅
 
- 
 **Funcionalidad**
 
 - Creacion de usuario y ApiKEY para acceder al resto de los endpoints ❌
