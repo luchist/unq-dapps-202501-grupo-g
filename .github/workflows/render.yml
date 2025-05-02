@@ -46,4 +46,17 @@ jobs:
 
     steps:
       - name: Trigger Deploy in Render
-        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          echo "::group::Starting Render Deploy..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.RENDER_DEPLOY_HOOK }})
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n1)
+          
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo -e "\033[32mDeployment success!\033[0m"
+          else
+            echo -e "\033[31mDeployment failed: HTTP Status $HTTP_STATUS\033[0m"
+            echo -e "\033[31mResponse: $BODY\033[0m"
+            exit 1
+          fi
+          echo "::endgroup::"
