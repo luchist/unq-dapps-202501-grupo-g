@@ -2,13 +2,23 @@ name: SonarQube
 on:
   push:
     branches:
-      - main
+      - '**'
+    paths-ignore:
+      - '*.md'
   pull_request:
     types: [ opened, synchronize, reopened ]
+    paths-ignore:
+      - '*.md'
+
 jobs:
   build:
+    # avoids duplicate analysis on open PRs and PRs from forks
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 15
     name: Build and analyze
     runs-on: ubuntu-latest
+    environment:
+      name: production
     steps:
       - uses: actions/checkout@v4
         with:
@@ -18,7 +28,11 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 17
-          distribution: 'zulu' # Alternative distribution options are available
+          distribution: 'temurin'
+          cache: 'gradle'
+          cache-dependency-path: |
+            football-stats-predictions/gradle/wrapper/gradle-wrapper.properties
+            football-stats-predictions/build.gradle.kts
 
       - name: Cache SonarQube packages
         uses: actions/cache@v4
@@ -26,13 +40,6 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
 
       - name: Grant execute permission for gradlew
         working-directory: ./football-stats-predictions
@@ -43,4 +50,4 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
-        run: ./gradlew build sonar --info
+        run: ./gradlew build sonar --no-daemon --parallel --info

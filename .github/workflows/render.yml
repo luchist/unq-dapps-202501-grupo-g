@@ -1,0 +1,64 @@
+name: Render CI/CD
+
+on:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - '*.md'
+
+jobs:
+  build:
+    timeout-minutes: 15
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+          cache-dependency-path: |
+            football-stats-predictions/gradle/wrapper/gradle-wrapper.properties
+            football-stats-predictions/build.gradle.kts
+
+      - name: Grant execute permission for gradlew
+        working-directory: ./football-stats-predictions
+        run: chmod +x gradlew
+
+      - name: Build and Test
+        working-directory: ./football-stats-predictions
+        env:
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
+        run: ./gradlew build --no-daemon --parallel --console=plain --build-cache
+
+  deploy:
+    name: Deploy to Render
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: ${{ vars.RENDER_APP_URL }}
+
+    steps:
+      - name: Trigger Deploy in Render
+        run: |
+          echo "::group::Starting Render Deploy..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.RENDER_DEPLOY_HOOK }})
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n1)
+          
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo -e "\033[32mDeployment success!\033[0m"
+          else
+            echo -e "\033[31mDeployment failed: HTTP Status $HTTP_STATUS\033[0m"
+            echo -e "\033[31mResponse: $BODY\033[0m"
+            exit 1
+          fi
+          echo "::endgroup::"

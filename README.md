@@ -7,7 +7,7 @@
 - [SonarCloud](https://sonarcloud.io/project/overview?id=luchist_unq-dapps-202501-grupo-g)
 - [Render](https://unq-dapps-202501-grupo-g.onrender.com)
 
-### Entrega Nro. 1
+## Entrega Nro. 1
 
 **Core**
 
@@ -15,7 +15,7 @@
 - Configuración en GitHubActions ✅
 - Build corriendo y SUCCESS ✅
 - SonarCloud (Registrar el proyecto y con issues menor a 10) ✅
-- Deploy automático en Render usando Git Actions de GitHub ❌
+- Deploy automático en Render usando Git Actions de GitHub ✅
 - Clean Code según la materia (todo en Ingles) ✅
 - JWT implementado ❌
 - Configuracion de https://swagger.io/ en el back-API  (v3) ✅
@@ -25,8 +25,14 @@
 - Modelo segun necesidad de enpoints ✅
 - Testing automático unitario según las pautas de la materia ✅
 
- 
 **Funcionalidad**
 
 - Creacion de usuario y ApiKEY para acceder al resto de los endpoints ❌
 - Endpoint de jugadores de un equipo ✅
+
+## Integrantes
+
+|              |                                                                                                                                              |           
+|--------------|:--------------------------------------------------------------------------------------------------------------------------------------------:|
+| Luis Coronel |       [![GitHub followers](https://img.shields.io/github/followers/luchist.svg?style=social&label=Follow)](https://github.com/luchist)       |
+| Ulises Lopez | [![GitHub followers](https://img.shields.io/github/followers/uliseslopez98.svg?style=social&label=Follow)](https://github.com/uliseslopez98) |
