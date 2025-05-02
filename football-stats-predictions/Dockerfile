@@ -1,28 +1,31 @@
-# Etapa de construcción
+# Building the application
 FROM gradle:8.3-jdk17 AS build
 
-# Configuración del entorno
+# Environment variables
+ARG FOOTBALL_API_KEY
+ENV FOOTBALL_API_KEY=${FOOTBALL_API_KEY}
+
 WORKDIR /app
 ENV GRADLE_USER_HOME=/app/.gradle
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
 
-# Copiamos solo los archivos de configuración primero
+# Copy config files
 COPY settings.gradle.kts build.gradle.kts ./
 COPY gradle gradle
 COPY gradlew .
 
-# Descargamos dependencias
+# Dependencies
 RUN chmod +x gradlew && \
-    ./gradlew dependencies --no-daemon || return 0
+    ./gradlew dependencies --no-daemon
 
-# Copiamos el resto del código
+# Copy source code
 COPY . .
 
-# Construimos la aplicación
+# Build the application
 RUN chmod +x gradlew && \
-    ./gradlew clean build --no-daemon
+    ./gradlew clean build --no-daemon --scan
 
-# Etapa de ejecución
+# Execute
 FROM eclipse-temurin:17-jdk-alpine
 
 WORKDIR /app
