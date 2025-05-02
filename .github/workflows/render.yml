@@ -41,7 +41,7 @@ jobs:
     name: Deploy to Render
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/automatic-ci-cd'
+    if: github.ref == 'refs/heads/main'
     environment:
       name: production
       url: ${{ vars.RENDER_APP_URL }}
