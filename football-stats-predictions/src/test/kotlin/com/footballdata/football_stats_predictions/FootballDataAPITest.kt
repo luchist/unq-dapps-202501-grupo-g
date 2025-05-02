@@ -13,6 +13,7 @@ class FootballDataAPITest {
 
     @Test
     fun testGetTeamComposition() {
+        assert(footballDataAPI != null) { "FootballDataAPI should be initialized" }
         val listOfPlayers = footballDataAPI.getTeamComposition("90") // Real Betis
 
         // Add assertions to verify the expected behavior
