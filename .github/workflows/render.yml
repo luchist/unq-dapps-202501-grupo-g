@@ -7,6 +7,7 @@ on:
 
 jobs:
   build:
+    timeout-minutes: 15
     name: Build and Test
     runs-on: ubuntu-latest
 
@@ -19,13 +20,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
+          cache: 'gradle'
+          cache-dependency-path: |
+            football-stats-predictions/gradle/wrapper/gradle-wrapper.properties
+            football-stats-predictions/build.gradle.kts
 
       - name: Grant execute permission for gradlew
         working-directory: ./football-stats-predictions
@@ -42,6 +40,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/automatic-ci-cd'
+    environment:
+      name: production
+      url: ${{ vars.RENDER_APP_URL }}
 
     steps:
       - name: Trigger Deploy in Render
