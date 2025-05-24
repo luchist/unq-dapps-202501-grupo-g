@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.data
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.footballdata.football_stats_predictions.model.Player
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.net.HttpURLConnection
@@ -10,7 +11,10 @@ import java.net.URL
 @Component
 class FootballDataAPI(
     @Value("\${integration.football.api.url}") val apiUrl: String,
-    @Value("\${integration.football.api.apikey}") val apiKey: String
+    @Value("\${integration.football.api.apikey}") val apiKey: String,
+    val connectionFactory: (String) -> HttpURLConnection = { urlString: String ->
+        URL(urlString).openConnection() as HttpURLConnection
+    }
 ) : StatisticsProvider {
 
     override fun getTeamStatistics(teamName: String): TeamStatistics {
@@ -41,7 +45,9 @@ class FootballDataAPI(
 
         val requestURL = apiUrl + "v4/teams/$teamName/"
 
-        val connection = URL(requestURL).openConnection() as HttpURLConnection
+        val connection = connectionFactory(requestURL)
+
+        //val connection = URL(requestURL).openConnection() as HttpURLConnection
         connection.apply {
             requestMethod = "GET"
             setRequestProperty("Accept", "application/json")
@@ -56,20 +62,13 @@ class FootballDataAPI(
         return squadNode.map { playerNode ->
             Player(
                 id = playerNode.get("id").asLong(),
-                name = playerNode.get("name").asText(),
+                playerName = playerNode.get("name").asText(),
                 position = playerNode.get("position").asText(),
                 dateOfBirth = playerNode.get("dateOfBirth").asText(),
-                nationality = playerNode.get("nationality").asText()
+                nationality = playerNode.get("nationality").asText(),
+                shoots = 0,
+                interceptions = 0
             )
         }
     }
-
-
-    data class Player(
-        val id: Long,
-        val name: String,
-        val position: String,
-        val dateOfBirth: String,
-        val nationality: String
-    )
 }
