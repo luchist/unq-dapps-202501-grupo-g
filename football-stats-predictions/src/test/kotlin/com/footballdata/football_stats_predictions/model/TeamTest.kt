@@ -1,18 +1,15 @@
 package com.footballdata.football_stats_predictions.model
 
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
 class TeamTest {
-    @Test
-    fun contextLoads() {
-    }
 
     @Test
-    fun testTeamBuilder() {
-
-        val mockPlayers = listOf(
+    fun `should create team with correct attributes when using builder`() {
+        // Arrange
+        val expectedTeamName = "Real Madrid"
+        val expectedPlayers = listOf(
             PlayerBuilder()
                 .withPlayerName("Cristiano Ronaldo")
                 .withPosition("Forward")
@@ -31,12 +28,50 @@ class TeamTest {
                 .build()
         ).toMutableList()
 
+        // Act
         val team = TeamBuilder()
-            .withTeamName("Real Madrid")
-            .withPlayers(mockPlayers)
+            .withTeamName(expectedTeamName)
+            .withPlayers(expectedPlayers)
             .build()
 
-        assert(team.teamName == "Real Madrid")
-        assert(team.players.size == 2)
+        // Assert
+        assertEquals(expectedTeamName, team.teamName)
+        assertEquals(expectedPlayers, team.players)
+        assertEquals(2, team.players.size)
+        assertEquals("Cristiano Ronaldo", team.players[0].playerName)
+        assertEquals("Lionel Messi", team.players[1].playerName)
+    }
+
+    @Test
+    fun `should create team with empty player list when using builder without players`() {
+        // Arrange
+        val expectedTeamName = "Barcelona"
+
+        // Act
+        val team = TeamBuilder()
+            .withTeamName(expectedTeamName)
+            .build()
+
+        // Assert
+        assertEquals(expectedTeamName, team.teamName)
+        assertEquals(0, team.players.size)
+    }
+
+    @Test
+    fun `should allow adding players after team creation`() {
+        // Arrange
+        val team = TeamBuilder()
+            .withTeamName("Valencia")
+            .build()
+        val newPlayer = PlayerBuilder()
+            .withPlayerName("David Villa")
+            .build()
+
+        // Act
+        team.players.add(newPlayer)
+
+        // Assert
+        assertEquals(1, team.players.size)
+        assertEquals("David Villa", team.players[0].playerName)
     }
 }
