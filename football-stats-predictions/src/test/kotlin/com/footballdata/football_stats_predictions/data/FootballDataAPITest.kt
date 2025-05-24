@@ -1,34 +1,90 @@
 package com.footballdata.football_stats_predictions.data
 
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
+import org.junit.jupiter.api.assertThrows
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
+import java.io.ByteArrayInputStream
+import java.net.HttpURLConnection
 
-@SpringBootTest
 class FootballDataAPITest {
 
-    @Autowired
+    private lateinit var connection: HttpURLConnection
     private lateinit var footballDataAPI: FootballDataAPI
+    private val apiUrl = "http://test-api.com/"
+    private val apiKey = "test-api-key"
+
+    @BeforeEach
+    fun setup() {
+        connection = mock(HttpURLConnection::class.java)
+        footballDataAPI = FootballDataAPI(apiUrl, apiKey) { connection }
+    }
 
     @Test
-    fun testGetTeamComposition() {
-        val listOfPlayers = footballDataAPI.getTeamComposition("90") // Real Betis
+    fun `should parse team composition correctly when API returns valid data`() {
+        // Arrange
+        val mockJson = """
+        {
+            "squad": [
+                {
+                    "id": 1,
+                    "name": "Lionel Messi",
+                    "position": "Forward",
+                    "dateOfBirth": "1987-06-24",
+                    "nationality": "Argentina"
+                },
+                {
+                    "id": 2,
+                    "name": "Cristiano Ronaldo",
+                    "position": "Forward",
+                    "dateOfBirth": "1985-02-05",
+                    "nationality": "Portugal"
+                }
+            ]
+        }
+        """.trimIndent()
 
-        // Add assertions to verify the expected behavior
-        assert(listOfPlayers.isNotEmpty()) { "Player list should not be empty" }
-        assert(listOfPlayers[0].playerName.isNotEmpty()) { "Player name should not be empty" }
+        `when`(connection.inputStream).thenReturn(ByteArrayInputStream(mockJson.toByteArray()))
+        `when`(connection.responseCode).thenReturn(200)
 
-        println(listOfPlayers[0])
-        println(listOfPlayers[1])
-        println(listOfPlayers[2])
-        println(listOfPlayers[3])
-        println(listOfPlayers[4])
-        println(listOfPlayers[5])
-        println(listOfPlayers[6])
-        println(listOfPlayers[7])
-        println(listOfPlayers[8])
-        println(listOfPlayers[9])
-        println(listOfPlayers[10])
-        println(listOfPlayers[11])
+        // Act
+        val result = footballDataAPI.getTeamComposition("90")
+
+        // Assert
+        assertEquals(2, result.size)
+        with(result[0]) {
+            assertEquals(1L, id)
+            assertEquals("Lionel Messi", playerName)
+            assertEquals("Forward", position)
+            assertEquals("1987-06-24", dateOfBirth)
+            assertEquals("Argentina", nationality)
+        }
+    }
+
+    @Test
+    fun `should throw exception when API returns error response`() {
+        // Arrange
+        val connection = mock(HttpURLConnection::class.java)
+        `when`(connection.responseCode).thenReturn(404)
+
+        // Act & Assert
+        assertThrows<Exception> {
+            footballDataAPI.getTeamComposition("invalid-team")
+        }
+    }
+
+    @Test
+    fun `should throw exception when API returns invalid JSON`() {
+        // Arrange
+        val invalidJson = "{ invalid json }"
+        val connection = mock(HttpURLConnection::class.java)
+        `when`(connection.inputStream).thenReturn(ByteArrayInputStream(invalidJson.toByteArray()))
+
+        // Act & Assert
+        assertThrows<Exception> {
+            footballDataAPI.getTeamComposition("90")
+        }
     }
 }

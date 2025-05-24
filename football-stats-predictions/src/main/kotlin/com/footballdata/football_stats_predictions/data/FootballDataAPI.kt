@@ -11,7 +11,10 @@ import java.net.URL
 @Component
 class FootballDataAPI(
     @Value("\${integration.football.api.url}") val apiUrl: String,
-    @Value("\${integration.football.api.apikey}") val apiKey: String
+    @Value("\${integration.football.api.apikey}") val apiKey: String,
+    val connectionFactory: (String) -> HttpURLConnection = { urlString: String ->
+        URL(urlString).openConnection() as HttpURLConnection
+    }
 ) : StatisticsProvider {
 
     override fun getTeamStatistics(teamName: String): TeamStatistics {
@@ -42,7 +45,9 @@ class FootballDataAPI(
 
         val requestURL = apiUrl + "v4/teams/$teamName/"
 
-        val connection = URL(requestURL).openConnection() as HttpURLConnection
+        val connection = connectionFactory(requestURL)
+
+        //val connection = URL(requestURL).openConnection() as HttpURLConnection
         connection.apply {
             requestMethod = "GET"
             setRequestProperty("Accept", "application/json")
