@@ -3,9 +3,12 @@ package com.footballdata.football_stats_predictions
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
+@EnableWebSecurity
+
 class SecurityConfig {
 
     @Bean
@@ -15,12 +18,20 @@ class SecurityConfig {
                 it.requestMatchers(
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/h2-console/**",
+                    "/login"
                 ).permitAll()
                 it.anyRequest().authenticated()
             }
-            .csrf { it.disable() }
+            .csrf { csrf ->
+                csrf.ignoringRequestMatchers("/h2-console/**")
+            }
+            .headers { headers ->
+                headers.frameOptions { frameOptions -> frameOptions.sameOrigin() }
+            }
             .httpBasic {}
+
         return http.build()
     }
 }
