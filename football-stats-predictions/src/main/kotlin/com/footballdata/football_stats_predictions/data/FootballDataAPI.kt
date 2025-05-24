@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.data
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.footballdata.football_stats_predictions.model.Player
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.net.HttpURLConnection
@@ -56,20 +57,13 @@ class FootballDataAPI(
         return squadNode.map { playerNode ->
             Player(
                 id = playerNode.get("id").asLong(),
-                name = playerNode.get("name").asText(),
+                playerName = playerNode.get("name").asText(),
                 position = playerNode.get("position").asText(),
                 dateOfBirth = playerNode.get("dateOfBirth").asText(),
-                nationality = playerNode.get("nationality").asText()
+                nationality = playerNode.get("nationality").asText(),
+                shoots = 0,
+                interceptions = 0
             )
         }
     }
-
-
-    data class Player(
-        val id: Long,
-        val name: String,
-        val position: String,
-        val dateOfBirth: String,
-        val nationality: String
-    )
 }

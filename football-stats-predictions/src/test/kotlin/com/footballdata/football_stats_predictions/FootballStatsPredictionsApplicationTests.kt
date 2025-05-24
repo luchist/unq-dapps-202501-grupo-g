@@ -14,7 +14,7 @@ class FootballStatsPredictionsApplicationTests {
     @Test
     fun testPlayerBuilder() {
         val player = PlayerBuilder()
-            .withName("Cristiano Ronaldo")
+            .withPlayerName("Cristiano Ronaldo")
             .withPosition("Forward")
             .withShoots(10)
             .withInterceptions(2)

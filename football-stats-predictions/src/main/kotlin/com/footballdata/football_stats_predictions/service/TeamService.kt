@@ -1,7 +1,7 @@
 package com.footballdata.football_stats_predictions.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
-import com.footballdata.football_stats_predictions.data.FootballDataAPI.Player
+import com.footballdata.football_stats_predictions.model.Player
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
