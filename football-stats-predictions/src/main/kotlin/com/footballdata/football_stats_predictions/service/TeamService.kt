@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
+import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.Player
 import com.footballdata.football_stats_predictions.model.TeamBuilder
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
@@ -46,5 +47,9 @@ class TeamService(
 
         // return the team composition
         return teamComposition
+    }
+
+    fun getScheduledMatches(teamName: String): List<Match> {
+        return footballDataAPI.getScheduledMatches(teamName)
     }
 }

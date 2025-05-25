@@ -53,7 +53,7 @@ class FootballDataAPI(
     }
 
     fun getScheduledMatches(teamName: String): List<Match> {
-        val requestURL = apiUrl + "v4/teams/$teamName/matches?status=SCHEDULED"
+        val requestURL = "v4/teams/$teamName/matches?status=SCHEDULED"
         val response = makeApiRequest(requestURL)
 
         return mapper.parseScheduledMatches(response)
