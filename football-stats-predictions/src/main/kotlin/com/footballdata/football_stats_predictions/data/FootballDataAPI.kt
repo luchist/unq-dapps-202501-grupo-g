@@ -1,74 +1,61 @@
 package com.footballdata.football_stats_predictions.data
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.Player
+import com.footballdata.football_stats_predictions.utils.JsonMapper
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.net.HttpURLConnection
 import java.net.URL
 
-
 @Component
 class FootballDataAPI(
     @Value("\${integration.football.api.url}") val apiUrl: String,
     @Value("\${integration.football.api.apikey}") val apiKey: String,
+    private val mapper: JsonMapper = JsonMapper(),
     val connectionFactory: (String) -> HttpURLConnection = { urlString: String ->
         URL(urlString).openConnection() as HttpURLConnection
     }
-) : StatisticsProvider {
+) {
 
-    override fun getTeamStatistics(teamName: String): TeamStatistics {
-        TODO("Not yet implemented")
+    private fun buildUrl(endpoint: String): String {
+        val baseUrl = apiUrl.removeSuffix("/")
+        val cleanEndpoint = endpoint.removePrefix("/")
+        return "$baseUrl/$cleanEndpoint"
     }
 
-    override fun getPlayerStatistics(playerName: String): PlayerStatistics {
-        TODO("Not yet implemented")
-    }
+    private fun makeApiRequest(endpoint: String): String {
+        val requestURL = buildUrl(endpoint)
+        val connection = connectionFactory(requestURL)
 
-    override fun getMatchStatistics(matchId: String): MatchStatistics {
-        TODO("Not yet implemented")
-    }
+        return try {
+            connection.apply {
+                requestMethod = "GET"
+                setRequestProperty("Accept", "application/json")
+                setRequestProperty("X-Auth-Token", apiKey)
+            }
 
-    fun getMatchResult(matchDate: String, leagueName: String) {
-        TODO("Not yet implemented")
-    }
+            if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+                throw RuntimeException("API request failed: ${connection.responseCode}")
+            }
 
-    fun getFixtureLeague(leagueName: String) {
-        TODO("Not yet implemented")
-    }
-
-    fun getTeamSetup(teamName: String, matchDate: String, leagueName: String) {
-        TODO("Not yet implemented")
+            connection.inputStream.bufferedReader().use { it.readText() }
+        } finally {
+            connection.disconnect()
+        }
     }
 
     fun getTeamComposition(teamName: String): List<Player> {
+        val requestURL = "v4/teams/$teamName/"
+        val response = makeApiRequest(requestURL)
 
-        val requestURL = apiUrl + "v4/teams/$teamName/"
+        return mapper.parseTeamComposition(response)
+    }
 
-        val connection = connectionFactory(requestURL)
+    fun getScheduledMatches(teamName: String): List<Match> {
+        val requestURL = "v4/teams/$teamName/matches?status=SCHEDULED"
+        val response = makeApiRequest(requestURL)
 
-        //val connection = URL(requestURL).openConnection() as HttpURLConnection
-        connection.apply {
-            requestMethod = "GET"
-            setRequestProperty("Accept", "application/json")
-            setRequestProperty("X-Auth-Token", apiKey)
-        }
-
-        val response = connection.inputStream.bufferedReader().use { it.readText() }
-        val mapper = ObjectMapper()
-        val rootNode = mapper.readTree(response)
-        val squadNode = rootNode.get("squad")
-
-        return squadNode.map { playerNode ->
-            Player(
-                id = playerNode.get("id").asLong(),
-                playerName = playerNode.get("name").asText(),
-                position = playerNode.get("position").asText(),
-                dateOfBirth = playerNode.get("dateOfBirth").asText(),
-                nationality = playerNode.get("nationality").asText(),
-                shoots = 0,
-                interceptions = 0
-            )
-        }
+        return mapper.parseScheduledMatches(response)
     }
 }

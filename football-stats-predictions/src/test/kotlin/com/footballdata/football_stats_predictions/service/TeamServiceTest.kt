@@ -1,12 +1,14 @@
 package com.footballdata.football_stats_predictions.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
+import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import com.footballdata.football_stats_predictions.model.Team
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -99,5 +101,69 @@ class TeamServiceTest {
 
         // Assert
         verify(playerRepository, never()).save(existingPlayer)
+    }
+
+    @Test
+    fun `should return scheduled matches from API`() {
+        // Arrange
+        val teamName = "Barcelona"
+        val expectedMatches = listOf(
+            Match(
+                id = 1,
+                league = "La Liga",
+                date = "2024-03-20T20:00:00Z",
+                homeTeamId = 81,
+                homeTeamName = "Barcelona",
+                awayTeamId = 86,
+                awayTeamName = "Real Madrid"
+            ),
+            Match(
+                id = 2,
+                league = "Champions League",
+                date = "2024-03-25T20:00:00Z",
+                homeTeamId = 81,
+                homeTeamName = "Barcelona",
+                awayTeamId = 50,
+                awayTeamName = "Manchester City"
+            )
+        )
+
+        `when`(footballDataAPI.getScheduledMatches(teamName)).thenReturn(expectedMatches)
+
+        // Act
+        val result = teamService.getScheduledMatches(teamName)
+
+        // Assert
+        assert(result == expectedMatches)
+        verify(footballDataAPI, times(1)).getScheduledMatches(teamName)
+    }
+
+    @Test
+    fun `should return empty list when no scheduled matches`() {
+        // Arrange
+        val teamName = "Barcelona"
+        val expectedMatches = emptyList<Match>()
+
+        `when`(footballDataAPI.getScheduledMatches(teamName)).thenReturn(expectedMatches)
+
+        // Act
+        val result = teamService.getScheduledMatches(teamName)
+
+        // Assert
+        assert(result.isEmpty())
+        verify(footballDataAPI, times(1)).getScheduledMatches(teamName)
+    }
+
+    @Test
+    fun `should propagate exception when API fails`() {
+        // Arrange
+        val teamName = "Barcelona"
+        `when`(footballDataAPI.getScheduledMatches(teamName)).thenThrow(RuntimeException("API Error"))
+
+        // Act & Assert
+        assertThrows<RuntimeException> {
+            teamService.getScheduledMatches(teamName)
+        }
+        verify(footballDataAPI, times(1)).getScheduledMatches(teamName)
     }
 }

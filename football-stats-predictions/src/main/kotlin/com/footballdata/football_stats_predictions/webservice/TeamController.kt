@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.Player
 import com.footballdata.football_stats_predictions.service.TeamService
 import io.swagger.v3.oas.annotations.Operation
@@ -24,5 +25,17 @@ class TeamController(@field:Autowired var teamService: TeamService) {
         @PathVariable teamName: String
     ): List<Player> {
         return teamService.getTeamComposition(teamName)
+    }
+
+    @Operation(summary = "Get scheduled matches", description = "Returns a list of scheduled Matches for a team")
+    @GetMapping("/{teamName}/matches")
+    fun getScheduledMatches(
+        @Parameter(
+            description = "The team name for which scheduled matches are needed",
+            required = true
+        )
+        @PathVariable teamName: String
+    ): List<Match> {
+        return teamService.getScheduledMatches(teamName)
     }
 }
