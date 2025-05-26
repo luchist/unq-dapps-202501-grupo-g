@@ -2,12 +2,10 @@ package com.footballdata.football_stats_predictions.service
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.Jwts.parserBuilder
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
 import javax.crypto.spec.SecretKeySpec
-
 
 @Service
 class TokenService(
@@ -34,7 +32,7 @@ class TokenService(
     }
 
     private fun extractAllClaims(token: String): Claims {
-        return parserBuilder()
+        return Jwts.parserBuilder()
             .setSigningKey(signingKey)
             .build()
             .parseClaimsJws(token)

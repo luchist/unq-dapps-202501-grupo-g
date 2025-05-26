@@ -4,6 +4,7 @@ import com.footballdata.football_stats_predictions.repositories.UserRepository
 import com.footballdata.football_stats_predictions.service.JwtUserDetailsService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
@@ -67,6 +68,20 @@ class SecurityConfig {
             }
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .exceptionHandling {
+                it.authenticationEntryPoint { _, response, ex ->
+                    // 401 for authentication failures
+                    response.status = HttpStatus.UNAUTHORIZED.value()
+                    response.contentType = "application/json"
+                    response.writer.write("{\"error\":\"${ex.message}\"}")
+                }
+                it.accessDeniedHandler { _, response, ex ->
+                    // 403 for authorization failures
+                    response.status = HttpStatus.FORBIDDEN.value()
+                    response.contentType = "application/json"
+                    response.writer.write("{\"error\":\"${ex.message}\"}")
+                }
+            }
 
         return http.build()
     }
