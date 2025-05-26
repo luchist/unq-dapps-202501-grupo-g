@@ -34,4 +34,8 @@ class UserRepository(
     fun findByUsername(email: String): User? =
         users
             .firstOrNull { it.name == email }
+
+    fun save(user: User) {
+        users.add(user)
+    }
 }
