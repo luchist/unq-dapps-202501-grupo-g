@@ -45,18 +45,19 @@ class SecurityConfig {
         authenticationProvider: AuthenticationProvider
     ): SecurityFilterChain {
         http
-            .authorizeHttpRequests {
-                it.requestMatchers(
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/h2-console/**",
-                    "/login"
-                ).permitAll()
-                it.anyRequest().authenticated()
-            }
-            .csrf { csrf ->
-                csrf.ignoringRequestMatchers("/h2-console/**")
+            .csrf { it.disable() }
+            .cors { it.configure(http) }
+            .authorizeHttpRequests { auth ->
+                auth
+                    .requestMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/h2-console/**",
+                        "/api/auth/**",
+                        "/login"
+                    ).permitAll()
+                    .anyRequest().authenticated()
             }
             .headers { headers ->
                 headers.frameOptions { frameOptions -> frameOptions.sameOrigin() }
@@ -66,7 +67,6 @@ class SecurityConfig {
             }
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter::class.java)
-            .httpBasic {}
 
         return http.build()
     }
