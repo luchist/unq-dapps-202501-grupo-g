@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.dto.*
 import com.footballdata.football_stats_predictions.model.Role
 import com.footballdata.football_stats_predictions.model.User
 import com.footballdata.football_stats_predictions.repositories.UserRepository
@@ -46,9 +47,4 @@ class AuthController(
             )
         )
     }
-
-    data class RegisterRequest(
-        val username: String,
-        val password: String
-    )
 }

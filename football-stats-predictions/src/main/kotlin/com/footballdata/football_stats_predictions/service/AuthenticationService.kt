@@ -1,8 +1,8 @@
 package com.footballdata.football_stats_predictions.service
 
+import com.footballdata.football_stats_predictions.dto.AuthenticationRequest
+import com.footballdata.football_stats_predictions.dto.AuthenticationResponse
 import com.footballdata.football_stats_predictions.repositories.RefreshTokenRepository
-import com.footballdata.football_stats_predictions.webservice.AuthenticationRequest
-import com.footballdata.football_stats_predictions.webservice.AuthenticationResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.AuthenticationServiceException

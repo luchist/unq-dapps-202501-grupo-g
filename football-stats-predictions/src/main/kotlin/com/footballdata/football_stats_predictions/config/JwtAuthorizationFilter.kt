@@ -1,4 +1,4 @@
-package com.footballdata.football_stats_predictions
+package com.footballdata.football_stats_predictions.config
 
 import com.footballdata.football_stats_predictions.service.TokenService
 import jakarta.servlet.FilterChain
