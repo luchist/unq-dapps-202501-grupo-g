@@ -5,11 +5,15 @@ import com.footballdata.football_stats_predictions.model.Role
 import com.footballdata.football_stats_predictions.model.User
 import com.footballdata.football_stats_predictions.repositories.UserRepository
 import com.footballdata.football_stats_predictions.service.AuthenticationService
+import io.jsonwebtoken.ExpiredJwtException
+import io.jsonwebtoken.JwtException
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -57,7 +61,18 @@ class AuthController(
     @PostMapping("/refresh")
     fun refreshAccessToken(
         @Valid @RequestBody request: RefreshTokenRequest
-    ): TokenResponse = TokenResponse(token = authenticationService.refreshAccessToken(request.token))
+    ): ResponseEntity<TokenResponse> {
+        return try {
+            val newToken = authenticationService.refreshAccessToken(request.token)
+            ResponseEntity.ok(TokenResponse(token = newToken))
+        } catch (ex: ExpiredJwtException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(TokenResponse(error = "Token expired"))
+        } catch (ex: JwtException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(TokenResponse(error = "Invalid token"))
+        }
+    }
 
     @Operation(
         summary = "Register a new user",
