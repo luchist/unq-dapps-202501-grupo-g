@@ -7,6 +7,24 @@
 - [SonarCloud](https://sonarcloud.io/project/overview?id=luchist_unq-dapps-202501-grupo-g)
 - [Render](https://unq-dapps-202501-grupo-g.onrender.com)
 
+## Entrega Nro. 2
+
+**Core**
+
+- Estado de build en "Verde" ✅
+- Utilizar HSQLDB para persistir datos (opcion H2) ✅
+- Crear datos de prueba cuando levanta la aplicación ✅
+- Documentation de Endpoints (APIs) con Swagger (v3) ✅
+- Separar profiles de testing para unitarios y e2e
+- Implementar JOB de Coverage ✅
+
+**Funcionalidad**
+
+- Endpoint de próximos partidos de un equipo ✅
+- Endpoint de historial de consultas
+- Endpoint de rendimiento de jugador:
+- Endpoint de predicción de partido
+
 ## Entrega Nro. 1
 
 **Core**
@@ -17,7 +35,7 @@
 - SonarCloud (Registrar el proyecto y con issues menor a 10) ✅
 - Deploy automático en Render usando Git Actions de GitHub ✅
 - Clean Code según la materia (todo en Ingles) ✅
-- JWT implementado ❌
+- JWT implementado ✅
 - Configuracion de https://swagger.io/ en el back-API  (v3) ✅
 
 **Modelo**
@@ -27,7 +45,7 @@
 
 **Funcionalidad**
 
-- Creacion de usuario y ApiKEY para acceder al resto de los endpoints ❌
+- Creacion de usuario y ApiKEY para acceder al resto de los endpoints ✅
 - Endpoint de jugadores de un equipo ✅
 
 ## Integrantes

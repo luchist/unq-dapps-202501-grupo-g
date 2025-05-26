@@ -18,8 +18,4 @@ class Match(
     var homeTeam: Team? = null,
     @Transient
     var awayTeam: Team? = null
-) {
-    fun generateMatchPrediction() {
-        throw NotImplementedError()
-    }
-}
+)
