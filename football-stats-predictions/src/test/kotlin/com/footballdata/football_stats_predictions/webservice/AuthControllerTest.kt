@@ -15,6 +15,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argThat
+import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 
 @ExtendWith(MockitoExtension::class)
@@ -63,17 +64,17 @@ class AuthControllerTest {
     @Test
     fun `refreshAccessToken should return token response`() {
         // Arrange
-        val request = RefreshTokenRequest("refreshToken")
-        val expectedResponse = TokenResponse("newAccessToken")
-        `when`(authenticationService.refreshAccessToken(request.token))
-            .thenReturn(expectedResponse.token)
+        val refreshToken = "refreshToken"
+        val request = RefreshTokenRequest(refreshToken)
+        val newAccessToken = "newAccessToken"
+        `when`(authenticationService.refreshAccessToken(refreshToken)).thenReturn(newAccessToken)
 
         // Act
         val response = authController.refreshAccessToken(request)
 
         // Assert
-        assertEquals(expectedResponse, response)
-        verify(authenticationService).refreshAccessToken(request.token)
+        assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(TokenResponse(token = newAccessToken), response.body)
     }
 
     @Test
