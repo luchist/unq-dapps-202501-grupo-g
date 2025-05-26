@@ -22,6 +22,13 @@ class JwtAuthorizationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
+        // Skip the filter for Swagger and OpenAPI documentation paths
+        val path = request.servletPath
+        if (path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.startsWith("/swagger-ui.html")) {
+            filterChain.doFilter(request, response)
+            return
+        }
+
         val authorizationHeader: String? = request.getHeader("Authorization")
 
         if (null != authorizationHeader && authorizationHeader.startsWith("Bearer ")) {
