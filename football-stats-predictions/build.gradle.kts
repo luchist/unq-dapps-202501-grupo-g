@@ -72,6 +72,18 @@ tasks.jacocoTestReport {
         html.required.set(true)
         csv.required.set(false)
     }
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) {
+                exclude(
+                    "**/config/**",
+                    "**/dto/**",
+                    "**/FootballStatsPredictionsApplication.*", // Main application class
+                    "**/*\$*.*" // Kotlin synthetic classes
+                )
+            }
+        })
+    )
 }
 
 tasks.jacocoTestCoverageVerification {
