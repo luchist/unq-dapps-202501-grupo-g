@@ -6,7 +6,6 @@ import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -56,7 +55,7 @@ class TeamControllerTest {
     }
 
     @Test
-    fun `getTeamComposition should propagate exception when service fails`() {
+    fun `getTeamComposition should return 404 when service fails`() {
         // Arrange
         val teamName = "Barcelona"
         `when`(teamService.getTeamComposition(teamName))
@@ -65,10 +64,11 @@ class TeamControllerTest {
         val authentication: Authentication = org.mockito.Mockito.mock(Authentication::class.java)
         `when`(authentication.name).thenReturn("123")
 
-        // Act & Assert
-        assertThrows<Exception> {
-            teamController.getTeamComposition(teamName, authentication)
-        }
+        // Act
+        val result = teamController.getTeamComposition(teamName, authentication)
+
+        // Assert
+        assertEquals(404, result.statusCode.value())
         verify(teamService).getTeamComposition(teamName)
     }
 
