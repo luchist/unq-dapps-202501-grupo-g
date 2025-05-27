@@ -21,8 +21,8 @@
 **Funcionalidad**
 
 - Endpoint de próximos partidos de un equipo ✅
-- Endpoint de historial de consultas
-- Endpoint de rendimiento de jugador:
+- Endpoint de historial de consultas ✅
+- Endpoint de rendimiento de jugador
 - Endpoint de predicción de partido
 
 ## Entrega Nro. 1
