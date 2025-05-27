@@ -29,21 +29,4 @@ class QueryHistoryController(@Autowired private val queryHistoryService: QueryHi
         val userName = authentication.name
         return queryHistoryService.getUserQueryHistory(userName)
     }
-
-//    @Operation(summary = "Get query history from date", description = "Returns query history from specific date")
-//    @ApiResponses(
-//        value = [
-//            ApiResponse(responseCode = "200", description = "Query history retrieved successfully"),
-//            ApiResponse(responseCode = "401", description = "User not authenticated")
-//        ]
-//    )
-//    @GetMapping("/from")
-//    fun getUserQueryHistoryFromDate(
-//        @Parameter(description = "Start date for query history (format: yyyy-MM-dd'T'HH:mm:ss)")
-//        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) fromDate: LocalDateTime,
-//        authentication: Authentication
-//    ): List<QueryHistory> {
-//        val userId = authentication.name.toLong()
-//        return queryHistoryService.getUserQueryHistoryFromDate(userId, fromDate)
-//    }
 }

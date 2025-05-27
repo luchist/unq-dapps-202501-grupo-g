@@ -27,7 +27,4 @@ class QueryHistoryService(@Autowired private val queryHistoryRepository: QueryHi
 
     fun getUserQueryHistory(userName: String): List<QueryHistory> =
         queryHistoryRepository.findByUserNameOrderByTimestampDesc(userName)
-
-//    fun getUserQueryHistoryFromDate(userName: String, fromDate: LocalDateTime): List<QueryHistory> =
-//        queryHistoryRepository.findByUserIdAndTimestampAfter(userName, fromDate)
 }
