@@ -2,6 +2,7 @@ package com.footballdata.football_stats_predictions.webservice
 
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.Player
+import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -12,9 +13,13 @@ import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.security.core.Authentication
 
 @ExtendWith(MockitoExtension::class)
 class TeamControllerTest {
+
+    @Mock
+    private lateinit var queryHistoryService: QueryHistoryService
 
     @Mock
     private lateinit var teamService: TeamService
@@ -26,6 +31,10 @@ class TeamControllerTest {
     fun `getTeamComposition should return list of players`() {
         // Arrange
         val teamName = "Barcelona"
+
+        val authentication: Authentication = org.mockito.Mockito.mock(Authentication::class.java)
+        `when`(authentication.name).thenReturn("123")
+
         val expectedPlayers = listOf(
             Player(
                 1L, "Lionel Messi", "Forward",
@@ -39,10 +48,10 @@ class TeamControllerTest {
         `when`(teamService.getTeamComposition(teamName)).thenReturn(expectedPlayers)
 
         // Act
-        val result = teamController.getTeamComposition(teamName)
+        val result = teamController.getTeamComposition(teamName, authentication)
 
         // Assert
-        assertEquals(expectedPlayers, result)
+        assertEquals(expectedPlayers, result.body)
         verify(teamService).getTeamComposition(teamName)
     }
 
@@ -53,9 +62,12 @@ class TeamControllerTest {
         `when`(teamService.getTeamComposition(teamName))
             .thenThrow(RuntimeException("Service error"))
 
+        val authentication: Authentication = org.mockito.Mockito.mock(Authentication::class.java)
+        `when`(authentication.name).thenReturn("123")
+
         // Act & Assert
-        assertThrows<RuntimeException> {
-            teamController.getTeamComposition(teamName)
+        assertThrows<Exception> {
+            teamController.getTeamComposition(teamName, authentication)
         }
         verify(teamService).getTeamComposition(teamName)
     }
@@ -77,11 +89,14 @@ class TeamControllerTest {
         )
         `when`(teamService.getScheduledMatches(teamName)).thenReturn(expectedMatches)
 
+        val authentication: Authentication = org.mockito.Mockito.mock(Authentication::class.java)
+        `when`(authentication.name).thenReturn("123")
+
         // Act
-        val result = teamController.getScheduledMatches(teamName)
+        val result = teamController.getScheduledMatches(teamName, authentication)
 
         // Assert
-        assertEquals(expectedMatches, result)
+        assertEquals(expectedMatches, result.body)
         verify(teamService).getScheduledMatches(teamName)
     }
 
@@ -92,11 +107,14 @@ class TeamControllerTest {
         val expectedMatches = emptyList<Match>()
         `when`(teamService.getScheduledMatches(teamName)).thenReturn(expectedMatches)
 
+        val authentication: Authentication = org.mockito.Mockito.mock(Authentication::class.java)
+        `when`(authentication.name).thenReturn("123")
+
         // Act
-        val result = teamController.getScheduledMatches(teamName)
+        val result = teamController.getScheduledMatches(teamName, authentication)
 
         // Assert
-        assertEquals(expectedMatches, result)
+        assertEquals(expectedMatches, result.body)
         verify(teamService).getScheduledMatches(teamName)
     }
 }
