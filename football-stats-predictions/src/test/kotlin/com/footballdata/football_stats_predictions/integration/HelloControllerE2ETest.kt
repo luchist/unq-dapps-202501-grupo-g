@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 @AutoConfigureWebMvc
 @ActiveProfiles("e2e")
 @Transactional
-class TeamControllerE2ETest {
+class HelloControllerE2ETest {
 
     private val HTTP_LOCALHOST: String = "http://localhost:"
 
