@@ -51,7 +51,7 @@ class AuthControllerE2ETest {
     }
 
     @Test
-    fun `should return 403 when registering user with blank username`() {
+    fun `should return 400 when registering user with blank username`() {
         // Arrange
         val registerRequest = RegisterRequest(
             username = "",
@@ -68,12 +68,15 @@ class AuthControllerE2ETest {
         // Assert
         Assertions.assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
         val errorBody = response.body as Map<*, *>
-        println("Registration error response: $errorBody")
+
+        Assertions.assertThat(errorBody["status"]).isEqualTo(400)
+        Assertions.assertThat(errorBody["error"]).isEqualTo("Bad Request")
+        Assertions.assertThat(errorBody["message"]).isEqualTo("Cannot pass null or empty values to constructor")
     }
 
     @Test
     fun `should authenticate existing user successfully`() {
-        // Arrange - First register a user
+        // Arrange
         val username = "authuser_${System.currentTimeMillis()}"
         val password = "authpassword123"
 
@@ -97,7 +100,7 @@ class AuthControllerE2ETest {
     }
 
     @Test
-    fun `should return 403 for invalid authentication credentials`() {
+    fun `should return 401 for invalid authentication credentials`() {
         // Arrange
         val authRequest = AuthenticationRequest(
             username = "wronguser",
@@ -112,11 +115,9 @@ class AuthControllerE2ETest {
         )
 
         // Assert
-        Assertions.assertThat(response.statusCode).isEqualTo(HttpStatus.FORBIDDEN)
+        Assertions.assertThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
         val errorBody = response.body as Map<*, *>
-        println("Authentication error response: $errorBody")
 
-        // Check that some error indication is present
         val responseAsString = errorBody.toString().lowercase()
         Assertions.assertThat(responseAsString).containsAnyOf(
             "forbidden",
@@ -179,8 +180,11 @@ class AuthControllerE2ETest {
 
     @Test
     fun `should return 400 for malformed authentication request`() {
-        // Arrange - Send malformed JSON
-        val malformedRequest = mapOf("invalidField" to "value")
+        // Arrange - Send request with missing required fields
+        val malformedRequest = AuthenticationRequest(
+            username = "", // This should trigger validation error
+            password = ""  // This should trigger validation error
+        )
 
         // Act
         val response: ResponseEntity<Map<*, *>> = restTemplate.postForEntity(
@@ -191,7 +195,11 @@ class AuthControllerE2ETest {
 
         // Assert
         Assertions.assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
-        println("Malformed request error response: ${response.body}")
+        val errorBody = response.body as Map<*, *>
+
+        Assertions.assertThat(errorBody["status"]).isEqualTo(400)
+        Assertions.assertThat(errorBody["error"]).isEqualTo("Bad Request")
+        Assertions.assertThat(errorBody["message"]).isEqualTo("Cannot pass null or empty values to constructor")
     }
 
     @Test
@@ -214,8 +222,5 @@ class AuthControllerE2ETest {
         // Security headers assertions
         val headers = response.headers
         Assertions.assertThat(headers.contentType.toString()).contains("application/json")
-
-        // Common security headers that Spring Security might set
-        println("Response headers: ${headers.toSingleValueMap()}")
     }
 }
