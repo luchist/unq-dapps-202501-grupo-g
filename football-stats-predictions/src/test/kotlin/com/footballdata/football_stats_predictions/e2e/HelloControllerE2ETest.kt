@@ -22,13 +22,12 @@ class HelloControllerE2ETest {
 
     @Test
     fun `should return 401 without authentication`() {
-        // RestTemplate approach - simpler, synchronous
         val response: ResponseEntity<String> = restTemplate.getForEntity(
             "/api/hello",
             String::class.java
         )
 
-        // More comprehensive assertions
+        // Assertions
         Assertions.assertThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
         Assertions.assertThat(response.body).contains("error")
         Assertions.assertThat(response.headers.contentType.toString()).contains("application/json")
@@ -41,16 +40,14 @@ class HelloControllerE2ETest {
         Assertions.assertThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
         val errorBody = response.body as Map<*, *>
 
-        // Debug: Print the actual response structure
+        // Debug
         println("Actual response body: $errorBody")
         println("Keys in response: ${errorBody.keys}")
         println("Response body type: ${errorBody.javaClass}")
 
-        // Check what's actually in the response
+        // Assertions
         Assertions.assertThat(errorBody).isNotEmpty
 
-        // Spring Security error responses can vary by configuration
-        // Let's check for common patterns instead of exact structure
         val responseAsString = errorBody.toString().lowercase()
         Assertions.assertThat(responseAsString).containsAnyOf(
             "unauthorized",
@@ -79,7 +76,6 @@ class HelloControllerE2ETest {
         val headers = response.headers
         Assertions.assertThat(headers.contentType.toString()).contains("application/json")
 
-        // These headers might be set by Spring Security
         Assertions.assertThat(headers.getFirst("Cache-Control")).isNotNull()
         Assertions.assertThat(headers.getFirst("X-Content-Type-Options")).isEqualTo("nosniff")
     }

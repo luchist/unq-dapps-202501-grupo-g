@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.data
 
+import com.footballdata.football_stats_predictions.exceptions.TeamNotFoundException
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.Player
 import com.footballdata.football_stats_predictions.utils.JsonMapper
@@ -35,6 +36,10 @@ class FootballDataAPI(
                 setRequestProperty("X-Auth-Token", apiKey)
             }
 
+            if (connection.responseCode == 404) {
+                val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() }
+                throw TeamNotFoundException(errorBody ?: "Team not found")
+            }
             if (connection.responseCode != HttpURLConnection.HTTP_OK) {
                 throw RuntimeException("API request failed: ${connection.responseCode}")
             }

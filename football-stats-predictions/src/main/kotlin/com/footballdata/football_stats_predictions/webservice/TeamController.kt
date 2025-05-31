@@ -1,7 +1,5 @@
 package com.footballdata.football_stats_predictions.webservice
 
-import com.footballdata.football_stats_predictions.model.Match
-import com.footballdata.football_stats_predictions.model.Player
 import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
 import io.swagger.v3.oas.annotations.Operation
@@ -40,7 +38,7 @@ class TeamController(
         )
         @PathVariable teamName: String,
         authentication: Authentication
-    ): ResponseEntity<List<Player>> {
+    ): ResponseEntity<Any> {
         return try {
             val players = teamService.getTeamComposition(teamName)
             authentication.let {
@@ -59,10 +57,14 @@ class TeamController(
                     endpoint = "/api/teams/$teamName",
                     queryParams = "teamName=$teamName",
                     status = 404,
-                    message = e.message
+                    message = "Team not found." + e.message
                 )
             }
-            ResponseEntity.notFound().build()
+            val errorBody = mapOf(
+                "message" to ("Team not found"),
+                "error" to 404
+            )
+            ResponseEntity.status(404).body(errorBody)
         }
     }
 
@@ -70,7 +72,7 @@ class TeamController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "List of scheduled matches returned successfully"),
-            ApiResponse(responseCode = "404", description = "Team not found or no scheduled matches")
+            ApiResponse(responseCode = "404", description = "Team not found")
         ]
     )
     @GetMapping("/{teamName}/matches")
@@ -81,7 +83,7 @@ class TeamController(
         )
         @PathVariable teamName: String,
         authentication: Authentication
-    ): ResponseEntity<List<Match>> {
+    ): ResponseEntity<Any> {
         return try {
             val matches = teamService.getScheduledMatches(teamName)
             authentication.let {
@@ -100,10 +102,14 @@ class TeamController(
                     endpoint = "/api/teams/$teamName/matches",
                     queryParams = "teamName=$teamName",
                     status = 404,
-                    message = e.message
+                    message = "Team not found." + e.message
                 )
             }
-            ResponseEntity.notFound().build()
+            val errorBody = mapOf(
+                "message" to ("Team not found"),
+                "error" to 404
+            )
+            ResponseEntity.status(404).body(errorBody)
         }
     }
 }
