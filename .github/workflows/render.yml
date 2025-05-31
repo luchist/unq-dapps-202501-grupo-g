@@ -35,7 +35,7 @@ jobs:
         working-directory: ./football-stats-predictions
         env:
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
-        run: ./gradlew build --no-daemon --parallel --console=plain --build-cache -Dspring.profiles.active=
+        run: ./gradlew build --no-daemon --parallel --console=plain --build-cache
 
   deploy:
     name: Deploy to Render
