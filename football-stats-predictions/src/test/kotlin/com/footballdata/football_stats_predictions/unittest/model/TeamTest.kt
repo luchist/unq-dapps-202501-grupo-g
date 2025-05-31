@@ -1,5 +1,7 @@
-package com.footballdata.football_stats_predictions.model
+package com.footballdata.football_stats_predictions.unittest.model
 
+import com.footballdata.football_stats_predictions.model.PlayerBuilder
+import com.footballdata.football_stats_predictions.model.TeamBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

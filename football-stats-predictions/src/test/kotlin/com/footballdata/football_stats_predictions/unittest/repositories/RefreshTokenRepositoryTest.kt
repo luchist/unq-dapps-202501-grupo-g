@@ -1,5 +1,6 @@
-package com.footballdata.football_stats_predictions.repositories
+package com.footballdata.football_stats_predictions.unittest.repositories
 
+import com.footballdata.football_stats_predictions.repositories.RefreshTokenRepository
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

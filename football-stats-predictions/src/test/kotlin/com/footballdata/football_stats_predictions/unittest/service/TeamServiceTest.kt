@@ -1,4 +1,4 @@
-package com.footballdata.football_stats_predictions.service
+package com.footballdata.football_stats_predictions.unittest.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
 import com.footballdata.football_stats_predictions.model.Match
@@ -6,6 +6,7 @@ import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import com.footballdata.football_stats_predictions.model.Team
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
+import com.footballdata.football_stats_predictions.service.TeamService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

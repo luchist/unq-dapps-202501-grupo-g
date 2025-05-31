@@ -1,9 +1,10 @@
-package com.footballdata.football_stats_predictions.webservice
+package com.footballdata.football_stats_predictions.unittest.webservice
 
 import com.footballdata.football_stats_predictions.dto.*
 import com.footballdata.football_stats_predictions.model.Role
 import com.footballdata.football_stats_predictions.repositories.UserRepository
 import com.footballdata.football_stats_predictions.service.AuthenticationService
+import com.footballdata.football_stats_predictions.webservice.AuthController
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

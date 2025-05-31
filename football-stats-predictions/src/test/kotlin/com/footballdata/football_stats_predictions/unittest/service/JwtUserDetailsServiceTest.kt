@@ -1,8 +1,9 @@
-package com.footballdata.football_stats_predictions.service
+package com.footballdata.football_stats_predictions.unittest.service
 
 import com.footballdata.football_stats_predictions.model.Role
 import com.footballdata.football_stats_predictions.model.User
 import com.footballdata.football_stats_predictions.repositories.UserRepository
+import com.footballdata.football_stats_predictions.service.JwtUserDetailsService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
