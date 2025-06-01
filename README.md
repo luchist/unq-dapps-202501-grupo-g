@@ -15,7 +15,7 @@
 - Utilizar HSQLDB para persistir datos (opcion H2) ✅
 - Crear datos de prueba cuando levanta la aplicación ✅
 - Documentation de Endpoints (APIs) con Swagger (v3) ✅
-- Separar profiles de testing para unitarios y e2e
+- Separar profiles de testing para unitarios y e2e ✅
 - Implementar JOB de Coverage ✅
 
 **Funcionalidad**

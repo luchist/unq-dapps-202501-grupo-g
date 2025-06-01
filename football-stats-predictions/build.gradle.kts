@@ -59,9 +59,13 @@ sonar {
 tasks.test {
     //sets the spring profile to local if not running in CI
     val isCI = (System.getenv("CI") != null)
-    systemProperties(
-        "spring.profiles.active" to (if (isCI) "" else "local")
-    )
+    if (isCI) {
+        systemProperty("spring.profiles.active", "")
+        exclude("**/e2e/**") // Exclude e2e tests
+    } else {
+        systemProperty("spring.profiles.active", "local")
+    }
+
     finalizedBy(tasks.jacocoTestReport)
 }
 

@@ -1,7 +1,8 @@
-package com.footballdata.football_stats_predictions.webservice
+package com.footballdata.football_stats_predictions.unit.webservice
 
 import com.footballdata.football_stats_predictions.model.QueryHistory
 import com.footballdata.football_stats_predictions.service.QueryHistoryService
+import com.footballdata.football_stats_predictions.webservice.QueryHistoryController
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith

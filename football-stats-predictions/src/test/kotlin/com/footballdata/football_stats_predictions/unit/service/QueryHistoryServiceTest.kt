@@ -1,10 +1,12 @@
-package com.footballdata.football_stats_predictions.service
+package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.model.QueryHistory
 import com.footballdata.football_stats_predictions.repositories.QueryHistoryRepository
+import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentMatchers
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.verify
@@ -39,7 +41,7 @@ class QueryHistoryServiceTest {
             responseMessage = message
         )
 
-        `when`(queryHistoryRepository.save(org.mockito.ArgumentMatchers.any(QueryHistory::class.java)))
+        `when`(queryHistoryRepository.save(ArgumentMatchers.any(QueryHistory::class.java)))
             .thenReturn(expectedQueryHistory)
 
         // Act
@@ -47,7 +49,7 @@ class QueryHistoryServiceTest {
 
         // Assert
         assertEquals(expectedQueryHistory, result)
-        verify(queryHistoryRepository).save(org.mockito.ArgumentMatchers.any(QueryHistory::class.java))
+        verify(queryHistoryRepository).save(ArgumentMatchers.any(QueryHistory::class.java))
     }
 
     @Test
@@ -67,7 +69,7 @@ class QueryHistoryServiceTest {
             responseMessage = null
         )
 
-        `when`(queryHistoryRepository.save(org.mockito.ArgumentMatchers.any(QueryHistory::class.java)))
+        `when`(queryHistoryRepository.save(ArgumentMatchers.any(QueryHistory::class.java)))
             .thenReturn(expectedQueryHistory)
 
         // Act
@@ -75,7 +77,7 @@ class QueryHistoryServiceTest {
 
         // Assert
         assertEquals(expectedQueryHistory, result)
-        verify(queryHistoryRepository).save(org.mockito.ArgumentMatchers.any(QueryHistory::class.java))
+        verify(queryHistoryRepository).save(ArgumentMatchers.any(QueryHistory::class.java))
     }
 
     @Test
