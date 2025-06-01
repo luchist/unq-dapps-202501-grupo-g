@@ -1,4 +1,4 @@
-package com.footballdata.football_stats_predictions.unittest.utils
+package com.footballdata.football_stats_predictions.unit.utils
 
 import com.footballdata.football_stats_predictions.utils.JsonMapper
 import org.junit.jupiter.api.Assertions.assertEquals

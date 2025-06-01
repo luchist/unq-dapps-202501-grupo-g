@@ -1,4 +1,4 @@
-package com.footballdata.football_stats_predictions.unittest.model
+package com.footballdata.football_stats_predictions.unit.model
 
 import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import org.junit.jupiter.api.Assertions.assertEquals

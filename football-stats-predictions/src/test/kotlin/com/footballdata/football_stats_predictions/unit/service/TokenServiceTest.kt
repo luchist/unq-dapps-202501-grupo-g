@@ -1,4 +1,4 @@
-package com.footballdata.football_stats_predictions.unittest.service
+package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.service.TokenService
 import io.jsonwebtoken.ExpiredJwtException

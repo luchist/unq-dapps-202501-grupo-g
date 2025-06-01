@@ -1,4 +1,4 @@
-package com.footballdata.football_stats_predictions.unittest.repositories
+package com.footballdata.football_stats_predictions.unit.repositories
 
 import com.footballdata.football_stats_predictions.repositories.RefreshTokenRepository
 import org.junit.jupiter.api.Assertions.*

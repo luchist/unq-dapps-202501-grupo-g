@@ -1,4 +1,4 @@
-package com.footballdata.football_stats_predictions.unittest.service
+package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.dto.AuthenticationRequest
 import com.footballdata.football_stats_predictions.repositories.RefreshTokenRepository
@@ -150,7 +150,7 @@ class AuthenticationServiceTest {
         val result = authenticationService.refreshAccessToken(validRefreshToken)
 
         // Assert
-        //assertEquals(newAccessToken, result)
+        assertEquals(newAccessToken, result)
         verify(tokenService).extractUsername(validRefreshToken)
         verify(userDetailsService).loadUserByUsername(testUsername)
         verify(refreshTokenRepository).findUserDetailsByToken(validRefreshToken)

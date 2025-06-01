@@ -1,4 +1,4 @@
-package com.footballdata.football_stats_predictions.unittest.webservice
+package com.footballdata.football_stats_predictions.unit.webservice
 
 import com.footballdata.football_stats_predictions.webservice.HelloController
 import org.junit.jupiter.api.Assertions.assertEquals

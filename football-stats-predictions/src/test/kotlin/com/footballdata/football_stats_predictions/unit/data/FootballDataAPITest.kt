@@ -1,5 +1,6 @@
-package com.footballdata.football_stats_predictions.data
+package com.footballdata.football_stats_predictions.unit.data
 
+import com.footballdata.football_stats_predictions.data.FootballDataAPI
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
