@@ -3,12 +3,10 @@ package com.footballdata.football_stats_predictions.data
 import org.openqa.selenium.By
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
-import org.springframework.stereotype.Component
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
+import org.springframework.stereotype.Component
 import java.time.Duration
-import kotlin.ranges.until
-import kotlin.text.get
 
 @Component
 class FootballDataScraping {
@@ -64,7 +62,17 @@ class FootballDataScraping {
         val driver = createDriver()
         return try {
             driver.get("https://es.whoscored.com/Search/?t=$playerName")
-            val wait = WebDriverWait(driver, Duration.ofSeconds(10))
+            val wait = WebDriverWait(driver, Duration.ofSeconds(60))
+
+            // Haz clic en Aceptar cookies si es necesario
+            try {
+                val acceptCookiesButton = wait.until(
+                    ExpectedConditions.elementToBeClickable(By.cssSelector(".css-1wc0q5e"))
+                )
+                acceptCookiesButton.click()
+            } catch (e: Exception) {
+                // Si no aparece el botón, continuamos
+            }
 
             // Haz clic en el primer resultado del jugador
             val playerLink = wait.until(
@@ -72,30 +80,29 @@ class FootballDataScraping {
             )
             playerLink.click()
 
-            // Haz clic en la pestaña "Participaciones Actuales"
-            val participacionesTab = wait.until(
-                ExpectedConditions.elementToBeClickable(By.xpath("//a[contains(text(),'Participaciones Actuales')]"))
-            )
-            participacionesTab.click()
-
             // Espera a que cargue la tabla de participaciones
             wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".stat-table"))
+                ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary"))
             )
 
-            // Busca la fila "Total / Promedio"
-            val totalRow = driver.findElement(
-                By.xpath("//table[contains(@class,'stat-table')]//tr[td[contains(text(),'Total / Promedio')]]")
-            )
+            // Busca el body de la tabla de estadística
+            val tableBody = driver.findElement(By.id("player-table-statistics-body"))
+            val tableHeader = driver.findElement(By.id("player-table-statistics-head"))
 
-            // Extrae los valores de las celdas de esa fila
+            // Busca la ultima fila de la tabla de estadísticas
+            val totalRow = (tableBody.findElements(By.tagName("tr"))).last()
+            val namesRow = (tableHeader.findElements(By.tagName("tr"))).first()
+
+            // Mapea los nombre de las columnas con los valores de la última fila usando totalRow y namesRow
             val cells = totalRow.findElements(By.tagName("td"))
+            val namesCells = namesRow.findElements(By.tagName("th"))
             val stats = mutableMapOf<String, String>()
-            for (cell in cells) {
-                val header = cell.getAttribute("data-title") ?: continue
-                val value = cell.text
+            for (i in cells.indices) {
+                val header = namesCells[i].text
+                val value = cells[i].text
                 stats[header] = value
             }
+
             stats
         } finally {
             driver.quit()
