@@ -18,4 +18,9 @@ class FootballScrapingController(
     fun getPlayerStats(@RequestParam playerName: String): Map<String, String> {
         return footballDataScraping.getPlayerData(playerName)
     }
+
+    @GetMapping("/player2")
+    fun getPlayerStats2(@RequestParam playerName: String): Map<String, String> {
+        return footballDataScraping.getPlayerData2(playerName)
+    }
 }

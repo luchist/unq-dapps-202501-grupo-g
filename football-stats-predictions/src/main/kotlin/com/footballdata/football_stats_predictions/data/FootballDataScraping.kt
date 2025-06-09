@@ -108,4 +108,46 @@ class FootballDataScraping {
             driver.quit()
         }
     }
+
+    fun getPlayerData2(playerName: String): Map<String, String> {
+        val driver = createDriver()
+        return try {
+            driver.get("https://es.whoscored.com/Search/?t=$playerName")
+            val wait = WebDriverWait(driver, Duration.ofSeconds(60))
+
+            // Aceptar cookies si aparece el botón
+            try {
+                val acceptCookiesButton = wait.until(
+                    ExpectedConditions.elementToBeClickable(By.cssSelector(".css-1wc0q5e"))
+                )
+                acceptCookiesButton.click()
+            } catch (_: Exception) {}
+
+            // Haz clic en el primer resultado del jugador
+            val playerLink = wait.until(
+                ExpectedConditions.elementToBeClickable(By.cssSelector(".search-result a"))
+            )
+            playerLink.click()
+
+            // Espera a que cargue la tabla de estadísticas
+            wait.until(
+                ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary"))
+            )
+
+            // Encuentra la tabla y sus filas
+            val table = driver.findElement(By.id("statistics-table-summary"))
+            val headerRow = table.findElement(By.cssSelector("thead tr"))
+            val headers = headerRow.findElements(By.tagName("th")).map { it.text.trim() }.drop(1) // elimina la palabra Campeonato
+
+            val tbody = table.findElement(By.tagName("tbody"))
+            val rows = tbody.findElements(By.tagName("tr"))
+            val lastRow = rows.last()
+            val values = lastRow.findElements(By.tagName("td")).map { it.text.trim() }.drop(1) // elimina la palabra "Total / Promedio"
+
+            headers.zip(values).toMap()
+        } finally {
+            driver.quit()
+        }
+    }
+
 }
