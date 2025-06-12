@@ -7,6 +7,8 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.springframework.stereotype.Component
 import java.time.Duration
+import kotlin.math.exp
+import kotlin.math.abs
 
 @Component
 class FootballDataScraping {
@@ -175,6 +177,65 @@ class FootballDataScraping {
         } finally {
             driver.quit()
         }
+    }
+
+    fun predictMatchProbabilities(
+        localTeam: String,
+        visitanteTeam: String
+    ): Map<String, Double> {
+        val footballDataScraping = FootballDataScraping()
+        val localStats = footballDataScraping.getTeamData(localTeam)
+        val visitanteStats = footballDataScraping.getTeamData(visitanteTeam)
+
+        val weights = mapOf(
+            "Goles" to 0.25,
+            "Tiros pp" to 0.15,
+            "Posesion%" to 0.15,
+            "AciertoPase%" to 0.10,
+            "Aéreos" to 0.10,
+            "Rating" to 0.15,
+            "Yellow Cards" to 0.05,
+            "Red Cards" to 0.05
+        )
+
+        fun parseAndNormalize(key: String, value: String): Double {
+            val clean = value.replace(",", ".").replace("%", "").trim()
+            val num = clean.toDoubleOrNull() ?: 0.0
+            return when {
+                key.contains("%") || key.contains("Posesion") || key.contains("AciertoPase") -> num / 100.0
+                else -> num
+            }
+        }
+
+        fun calcScore(stats: Map<String, String>): Double {
+            var score = 0.0
+            for ((k, w) in weights) {
+                val v = stats[k] ?: "0"
+                val norm = parseAndNormalize(k, v)
+                score += norm * w
+            }
+            return score
+        }
+
+        val scoreLocal = calcScore(localStats)
+        val scoreVisitante = calcScore(visitanteStats)
+        val empateFactor = 1.0 - (kotlin.math.abs(scoreLocal - scoreVisitante) / (scoreLocal + scoreVisitante + 1e-6))
+        val scoreEmpate = (scoreLocal + scoreVisitante) / 2 * empateFactor
+
+        val expLocal = kotlin.math.exp(scoreLocal)
+        val expEmpate = kotlin.math.exp(scoreEmpate)
+        val expVisitante = kotlin.math.exp(scoreVisitante)
+        val sum = expLocal + expEmpate + expVisitante
+
+        val probLocal = (expLocal / sum) * 100
+        val probEmpate = (expEmpate / sum) * 100
+        val probVisitante = (expVisitante / sum) * 100
+
+        return mapOf(
+            "Victoria Local" to String.format("%.2f", probLocal).replace(",", ".").toDouble(),
+            "Empate" to String.format("%.2f", probEmpate).replace(",", ".").toDouble(),
+            "Victoria Visitante" to String.format("%.2f", probVisitante).replace(",", ".").toDouble()
+        )
     }
 
 }

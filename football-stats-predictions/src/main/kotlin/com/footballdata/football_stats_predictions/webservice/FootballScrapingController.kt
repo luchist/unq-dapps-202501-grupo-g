@@ -23,4 +23,12 @@ class FootballScrapingController(
     fun getPlayerStats2(@RequestParam playerName: String): Map<String, String> {
         return footballDataScraping.getPlayerData2(playerName)
     }
+
+    @GetMapping("/predict")
+    fun predictMatchProbabilities(
+        @RequestParam localTeam: String,
+        @RequestParam visitanteTeam: String
+    ): Map<String, Double> {
+        return footballDataScraping.predictMatchProbabilities(localTeam, visitanteTeam)
+    }
 }
