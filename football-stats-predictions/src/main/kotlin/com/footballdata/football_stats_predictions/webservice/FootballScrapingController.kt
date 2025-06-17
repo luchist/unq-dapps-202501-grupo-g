@@ -9,26 +9,31 @@ class FootballScrapingController(
     private val footballDataScraping: FootballDataScraping
 ) {
 
-    @GetMapping("/team")
-    fun getTeamStats(@RequestParam teamName: String): Map<String, String> {
+    @GetMapping("/team/{teamName}")
+    fun getTeamStats(@PathVariable teamName: String): Map<String, Double> {
         return footballDataScraping.getTeamData(teamName)
     }
 
-    @GetMapping("/player")
-    fun getPlayerStats(@RequestParam playerName: String): Map<String, String> {
+    @GetMapping("/player/{playerName}")
+    fun getPlayerStats(@PathVariable playerName: String): Map<String, Double> {
         return footballDataScraping.getPlayerData(playerName)
     }
 
-    @GetMapping("/player2")
-    fun getPlayerStats2(@RequestParam playerName: String): Map<String, String> {
+    @GetMapping("/player2/{playerName}")
+    fun getPlayerStats2(@PathVariable playerName: String): Map<String, Double> {
         return footballDataScraping.getPlayerData2(playerName)
     }
 
-    @GetMapping("/predict")
+    @GetMapping("/predict/{localTeam}/{visitanteTeam}")
     fun predictMatchProbabilities(
-        @RequestParam localTeam: String,
-        @RequestParam visitanteTeam: String
+        @PathVariable localTeam: String,
+        @PathVariable visitanteTeam: String
     ): Map<String, Double> {
         return footballDataScraping.predictMatchProbabilities(localTeam, visitanteTeam)
+    }
+
+    @GetMapping("/team/advanced/{teamName}")
+    fun getTeamAdvancedStatistics(@PathVariable teamName: String): Map<String, Double> {
+        return footballDataScraping.getTeamAdvancedStatistics(teamName)
     }
 }
