@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component
 import java.time.Duration
 import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.text.get
+import kotlin.unaryMinus
 
 @Component
 class FootballDataScraping {
@@ -237,6 +239,31 @@ class FootballDataScraping {
         } finally {
             driver.quit()
         }
+    }
+
+    fun compareTeamStatsWithDiff(
+        team1: String,
+        team2: String
+    ): Map<String, Map<String, String>> {
+        val stats1 = getTeamData(team1)
+        val stats2 = getTeamData(team2)
+        val allKeys = stats1.keys + stats2.keys
+
+        val team1Map = mutableMapOf<String, String>()
+        val team2Map = mutableMapOf<String, String>()
+
+        for (key in allKeys) {
+            val v1 = stats1[key] ?: 0.0
+            val v2 = stats2[key] ?: 0.0
+            val diff = v1 - v2
+            team1Map[key] = "$v1 (${String.format("%.2f", diff)})"
+            team2Map[key] = "$v2 (${String.format("%.2f", -diff)})"
+        }
+
+        return mapOf(
+            team1 to team1Map,
+            team2 to team2Map
+        )
     }
 
 }
