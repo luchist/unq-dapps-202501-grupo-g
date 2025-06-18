@@ -30,4 +30,11 @@ class PlayerController(private val footballDataScraping: FootballDataScraping) {
     fun getPlayerStats(@PathVariable playerName: String): Map<String, Double> {
         return footballDataScraping.getPlayerData(playerName)
     }
+
+    @GetMapping("/{playerName}/rating")
+    fun getPlayerRatingsAverage(
+        @PathVariable playerName: String
+    ): Double {
+        return footballDataScraping.getPlayerRatingsAverage(playerName)
+    }
 }

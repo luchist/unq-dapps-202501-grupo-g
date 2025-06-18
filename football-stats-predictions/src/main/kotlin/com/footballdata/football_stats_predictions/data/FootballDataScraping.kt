@@ -9,8 +9,6 @@ import org.springframework.stereotype.Component
 import java.time.Duration
 import kotlin.math.abs
 import kotlin.math.exp
-import kotlin.text.get
-import kotlin.unaryMinus
 
 @Component
 class FootballDataScraping {
@@ -36,6 +34,69 @@ class FootballDataScraping {
             ExpectedConditions.elementToBeClickable(By.cssSelector(".search-result a"))
         )
         resultLink.click()
+    }
+
+    fun getPlayerData(playerName: String): Map<String, Double> {
+        val driver = createDriver()
+        return try {
+            navigateAndAcceptCookies(driver, playerName)
+
+            // Busca el body de la tabla de estadística
+            val tableBody = driver.findElement(By.id("player-table-statistics-body"))
+            val tableHeader = driver.findElement(By.id("player-table-statistics-head"))
+
+            // Busca la ultima fila de la tabla de estadísticas
+            val totalRow = (tableBody.findElements(By.tagName("tr"))).last()
+            val namesRow = (tableHeader.findElements(By.tagName("tr"))).first()
+
+            // Mapea los nombres de las columnas con los valores de la última fila usando totalRow y namesRow
+            val cells = totalRow.findElements(By.tagName("td"))
+            val namesCells = namesRow.findElements(By.tagName("th"))
+            val stats = mutableMapOf<String, Double>()
+            for (i in cells.indices) {
+                val header = namesCells[i].text
+                val value = cells[i].text
+                stats[header] = value.toDoubleOrNull() ?: 0.0
+            }
+            stats
+        } finally {
+            driver.quit()
+        }
+    }
+
+    fun getPlayerRatingsAverage(playerName: String): Double {
+        val driver = createDriver()
+        return try {
+            navigateAndAcceptCookies(driver, playerName)
+
+            val wait = WebDriverWait(driver, Duration.ofSeconds(30))
+            val subNav = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("sub-navigation")))
+            val link = subNav.findElement(By.linkText("Encuentros"))
+            link.click()
+
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".table-body")))
+            val tableBody = driver.findElement(By.cssSelector(".table-body"))
+            val matchDivs = tableBody.findElements(By.xpath("./div"))
+
+            val validRatings = mutableListOf<Double>()
+            for (i in matchDivs.size - 1 downTo 0) {
+                val matchDiv = matchDivs[i]
+                val ratingDivs = matchDiv.findElements(By.cssSelector("div[title='Rating en este partido']"))
+                if (ratingDivs.isNotEmpty()) {
+                    val text = ratingDivs[0].text.trim()
+                    if (text != "N/D") {
+                        val rating = text.replace(",", ".").toDoubleOrNull()
+                        if (rating != null) {
+                            validRatings.add(rating)
+                            if (validRatings.size == 10) break
+                        }
+                    }
+                }
+            }
+            if (validRatings.isNotEmpty()) validRatings.average() else 0.0
+        } finally {
+            driver.quit()
+        }
     }
 
     fun getTeamData(teamName: String): Map<String, Double> {
@@ -70,58 +131,6 @@ class FootballDataScraping {
                 }
             }
             stats
-        } finally {
-            driver.quit()
-        }
-    }
-
-    fun getPlayerData(playerName: String): Map<String, Double> {
-        val driver = createDriver()
-        return try {
-            navigateAndAcceptCookies(driver, playerName)
-
-            // Busca el body de la tabla de estadística
-            val tableBody = driver.findElement(By.id("player-table-statistics-body"))
-            val tableHeader = driver.findElement(By.id("player-table-statistics-head"))
-
-            // Busca la ultima fila de la tabla de estadísticas
-            val totalRow = (tableBody.findElements(By.tagName("tr"))).last()
-            val namesRow = (tableHeader.findElements(By.tagName("tr"))).first()
-
-            // Mapea los nombres de las columnas con los valores de la última fila usando totalRow y namesRow
-            val cells = totalRow.findElements(By.tagName("td"))
-            val namesCells = namesRow.findElements(By.tagName("th"))
-            val stats = mutableMapOf<String, Double>()
-            for (i in cells.indices) {
-                val header = namesCells[i].text
-                val value = cells[i].text
-                stats[header] = value.toDoubleOrNull() ?: 0.0
-            }
-            stats
-        } finally {
-            driver.quit()
-        }
-    }
-
-    fun getPlayerData2(playerName: String): Map<String, Double> {
-        val driver = createDriver()
-        return try {
-            navigateAndAcceptCookies(driver, playerName)
-
-            // Encuentra la tabla y sus filas
-            val table = driver.findElement(By.id("statistics-table-summary"))
-            val headerRow = table.findElement(By.cssSelector("thead tr"))
-            val headers =
-                headerRow.findElements(By.tagName("th")).map { it.text.trim() }.drop(1) // elimina la palabra Campeonato
-
-            val tbody = table.findElement(By.tagName("tbody"))
-            val rows = tbody.findElements(By.tagName("tr"))
-            val lastRow = rows.last()
-            val values = lastRow.findElements(By.tagName("td")).map { it.text.trim() }.drop(1) // elimina la palabra "Total / Promedio"
-
-            headers.zip(values).associate { (header, value) ->
-                header to (value.toDoubleOrNull() ?: 0.0)
-            }
         } finally {
             driver.quit()
         }

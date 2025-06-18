@@ -19,11 +19,6 @@ class FootballScrapingController(
         return footballDataScraping.getPlayerData(playerName)
     }
 
-    @GetMapping("/player2/{playerName}")
-    fun getPlayerStats2(@PathVariable playerName: String): Map<String, Double> {
-        return footballDataScraping.getPlayerData2(playerName)
-    }
-
     @GetMapping("/predict/{localTeam}/{visitanteTeam}")
     fun predictMatchProbabilities(
         @PathVariable localTeam: String,
