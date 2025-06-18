@@ -14,7 +14,6 @@ import kotlin.math.exp
 class FootballDataScraping {
 
     private fun createDriver(): WebDriver {
-        //System.setProperty("webdriver.chrome.driver", "C:\\tools\\chromedriver\\chromedriver.exe")
         return ChromeDriver()
     }
 
@@ -68,7 +67,6 @@ class FootballDataScraping {
                     stats[header] = value.toDoubleOrNull() ?: 0.0
                 }
             }
-
             stats
         } finally {
             driver.quit()
@@ -97,7 +95,6 @@ class FootballDataScraping {
                 val value = cells[i].text
                 stats[header] = value.toDoubleOrNull() ?: 0.0
             }
-
             stats
         } finally {
             driver.quit()
@@ -130,73 +127,73 @@ class FootballDataScraping {
 
     fun predictMatchProbabilities(
         localTeam: String,
-        visitanteTeam: String
+        visitingTeam: String
     ): Map<String, Double> {
         val footballDataScraping = FootballDataScraping()
         val localStats = footballDataScraping.getTeamData(localTeam)
-        val visitanteStats = footballDataScraping.getTeamData(visitanteTeam)
+        val visitingStats = footballDataScraping.getTeamData(visitingTeam)
 
-        val weights = mapOf(
-            "Goles" to 0.25,
-            "Tiros pp" to 0.15,
-            "Posesion%" to 0.15,
-            "AciertoPase%" to 0.10,
-            "Aéreos" to 0.10,
-            "Rating" to 0.15,
-            "Yellow Cards" to 0.05,
-            "Red Cards" to 0.05
-        )
-
-        fun calcScore(stats: Map<String, Double>): Double {
-            var score = 0.0
-            for ((k, w) in weights) {
-                val v = stats[k] ?: 0.0
-                // Si es porcentaje, normaliza dividiendo por 100
-                val norm = if (k.contains("%") || k.contains("Posesion") || k.contains("AciertoPase")) v / 100.0 else v
-                score += norm * w
-            }
-            return score
-        }
-
-        val scoreLocal = calcScore(localStats)
-        val scoreVisitante = calcScore(visitanteStats)
-        val empateFactor = 1.0 - (abs(scoreLocal - scoreVisitante) / (scoreLocal + scoreVisitante + 1e-6))
-        val scoreEmpate = (scoreLocal + scoreVisitante) / 2 * empateFactor
+        val weights = getWeights()
+        val scoreLocal = calcScore(localStats, weights)
+        val scoreVisiting = calcScore(visitingStats, weights)
+        val drawFactor = 1.0 - (abs(scoreLocal - scoreVisiting) / (scoreLocal + scoreVisiting + 1e-6))
+        val scoreDraw = (scoreLocal + scoreVisiting) / 2 * drawFactor
 
         val expLocal = exp(scoreLocal)
-        val expEmpate = exp(scoreEmpate)
-        val expVisitante = exp(scoreVisitante)
-        val sum = expLocal + expEmpate + expVisitante
+        val expDraw = exp(scoreDraw)
+        val expVisiting = exp(scoreVisiting)
+        val sum = expLocal + expDraw + expVisiting
 
         val probLocal = (expLocal / sum) * 100
-        val probEmpate = (expEmpate / sum) * 100
-        val probVisitante = (expVisitante / sum) * 100
+        val probDraw = (expDraw / sum) * 100
+        val probVisiting = (expVisiting / sum) * 100
 
         return mapOf(
-            "Victoria Local" to String.format("%.2f", probLocal).replace(",", ".").toDouble(),
-            "Empate" to String.format("%.2f", probEmpate).replace(",", ".").toDouble(),
-            "Victoria Visitante" to String.format("%.2f", probVisitante).replace(",", ".").toDouble()
+            "Local Win" to String.format("%.2f", probLocal).replace(",", ".").toDouble(),
+            "Draw" to String.format("%.2f", probDraw).replace(",", ".").toDouble(),
+            "Visiting Win" to String.format("%.2f", probVisiting).replace(",", ".").toDouble()
         )
+    }
+
+    private fun getWeights(): Map<String, Double> = mapOf(
+        "Goles" to 0.25,
+        "Tiros pp" to 0.15,
+        "Posesion%" to 0.15,
+        "AciertoPase%" to 0.10,
+        "Aéreos" to 0.10,
+        "Rating" to 0.15,
+        "Yellow Cards" to 0.05,
+        "Red Cards" to 0.05
+    )
+
+    private fun calcScore(stats: Map<String, Double>, weights: Map<String, Double>): Double {
+        var score = 0.0
+        for ((k, w) in weights) {
+            val v = stats[k] ?: 0.0
+            val norm = if (k.contains("%") || k.contains("Posesion") || k.contains("AciertoPase")) v / 100.0 else v
+            score += norm * w
+        }
+        return score
     }
 
     fun getTeamAdvancedStatistics(teamName: String): Map<String, Double> {
         val stats = getTeamData(teamName)
         val advancedStats = getTeamGoalsAndShotEffectiveness(stats)
-        val resultados = getTeamWinsDrawsLosses(teamName)
+        val results = getTeamWinsDrawsLosses(teamName)
 
-        return advancedStats + resultados
+        return advancedStats + results
     }
 
     private fun getTeamGoalsAndShotEffectiveness(stats: Map<String, Double>): Map<String, Double> {
-        val goles = stats["Goles"] ?: 0.0
+        val goals = stats["Goles"] ?: 0.0
         val apps = stats["Apps"] ?: 1.0 // Evita división por cero
         val tirosPP = stats["Tiros pp"] ?: 0.0
 
-        val golesPorPartido = if (apps != 0.0) goles / apps else 0.0
-        val efectividadDeTiros = if (golesPorPartido != 0.0) tirosPP / golesPorPartido else 0.0
+        val goalsAGame = if (apps != 0.0) goals / apps else 0.0
+        val efectividadDeTiros = if (goalsAGame != 0.0) tirosPP / goalsAGame else 0.0
 
         return mapOf(
-            "Goles por Partido" to golesPorPartido,
+            "Goles por Partido" to goalsAGame,
             "Efectividad de Tiros" to efectividadDeTiros
         )
     }
@@ -209,14 +206,15 @@ class FootballDataScraping {
             // Hacer clic en el submenú de navegación
             val wait = WebDriverWait(driver, Duration.ofSeconds(30))
             val subNav = wait.until(ExpectedConditions.elementToBeClickable(By.id("sub-navigation")))
-            subNav.click()
+            val link = subNav.findElement(By.linkText("Encuentros"))
+            link.click()
     
             // Esperar a que aparezca el wrapper de fixtures
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("team-fixture-wrapper")))
     
             // Buscar todos los <a> con clase que contiene "box"
             val fixtureWrapper = driver.findElement(By.id("team-fixture-wrapper"))
-            val resultBoxes = fixtureWrapper.findElements(By.cssSelector("a[class^='box ']"))
+            val resultBoxes = fixtureWrapper.findElements(By.cssSelector("a[class^=' box ']"))
     
             // Contar cada tipo
             var wins = 0.0
@@ -225,7 +223,7 @@ class FootballDataScraping {
             for (box in resultBoxes) {
                 val clazz = box.getAttribute("class")
                 when {
-                    clazz.contains("box w") -> wins += 1.0
+                    clazz!!.contains("box w") -> wins += 1.0
                     clazz.contains("box d") -> draws += 1.0
                     clazz.contains("box l") -> losses += 1.0
                 }
