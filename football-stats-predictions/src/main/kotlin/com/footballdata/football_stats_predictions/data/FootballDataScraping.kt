@@ -7,8 +7,12 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.springframework.stereotype.Component
 import java.time.Duration
+import kotlin.collections.get
+import kotlin.compareTo
 import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.text.compareTo
+import kotlin.text.get
 
 @Component
 class FootballDataScraping {
@@ -64,39 +68,127 @@ class FootballDataScraping {
         }
     }
 
+    private fun clickOnSubNavigationLink(driver: WebDriver, linkText: String): WebDriverWait {
+        val wait = WebDriverWait(driver, Duration.ofSeconds(30))
+        val subNav = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("sub-navigation")))
+        val link = subNav.findElement(By.linkText(linkText))
+        link.click()
+        return wait
+    }
+
     fun getPlayerRatingsAverage(playerName: String): Double {
         val driver = createDriver()
         return try {
             navigateAndAcceptCookies(driver, playerName)
+            val wait = clickOnSubNavigationLink(driver, "Estadísticas del Partido")
 
-            val wait = WebDriverWait(driver, Duration.ofSeconds(30))
-            val subNav = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("sub-navigation")))
-            val link = subNav.findElement(By.linkText("Encuentros"))
-            link.click()
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary-matches")))
+            val statsDiv = driver.findElement(By.id("statistics-table-summary-matches"))
+            val tableBody = statsDiv.findElement(By.id("player-table-statistics-body"))
+            val ratingTds = tableBody.findElements(By.cssSelector("td.rating"))
 
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".table-body")))
-            val tableBody = driver.findElement(By.cssSelector(".table-body"))
-            val matchDivs = tableBody.findElements(By.xpath("./div"))
+            val ratings = ratingTds
+                .mapNotNull { it.text.trim().toDoubleOrNull() }
+                .take(10)
 
-            val validRatings = mutableListOf<Double>()
-            for (i in matchDivs.size - 1 downTo 0) {
-                val matchDiv = matchDivs[i]
-                val ratingDivs = matchDiv.findElements(By.cssSelector("div[title='Rating en este partido']"))
-                if (ratingDivs.isNotEmpty()) {
-                    val text = ratingDivs[0].text.trim()
-                    if (text != "N/D") {
-                        val rating = text.replace(",", ".").toDoubleOrNull()
-                        if (rating != null) {
-                            validRatings.add(rating)
-                            if (validRatings.size == 10) break
-                        }
-                    }
-                }
-            }
-            if (validRatings.isNotEmpty()) validRatings.average() else 0.0
+            if (ratings.isNotEmpty()) ratings.average() else 0.0
         } finally {
             driver.quit()
         }
+    }
+
+    private fun getPlayerHistoricalRatingsByYear(playerName: String, year: String): Map<String, Double> {
+        val driver = createDriver()
+        return try {
+            navigateAndAcceptCookies(driver, playerName)
+            val wait = clickOnSubNavigationLink(driver, "Historial")
+
+            // Esperar a que aparezca la tabla de estadísticas históricas
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary")))
+
+            val statsDiv = driver.findElement(By.id("statistics-table-summary"))
+
+            // Obtener las cabeceras de la tabla (nombres de columnas)
+            val headerRow = statsDiv.findElement(By.tagName("thead")).findElement(By.tagName("tr"))
+            val headers = headerRow.findElements(By.tagName("th")).map { it.text.trim() }
+
+            // Encontrar índices importantes
+            val jgdosIndex = headers.indexOfFirst { it.contains("Jgdos") }.takeIf { it >= 0 } ?: 1
+            val tppIndex = headers.indexOfFirst { it.contains("TpP") }.takeIf { it >= 0 } ?: headers.size
+
+            // Encontrar filas del año específico
+            val rows = statsDiv.findElement(By.tagName("tbody")).findElements(By.tagName("tr"))
+            val targetRows = rows.filter { row ->
+                val cells = row.findElements(By.tagName("td"))
+                cells.isNotEmpty() && cells[0].text.trim() == year
+            }
+
+            // Para columnas con promedios, necesitamos contar contribuciones
+            val combinedStats = mutableMapOf<String, Double>()
+            val contributionCounts = mutableMapOf<String, Int>()
+
+            for (row in targetRows) {
+                val cells = row.findElements(By.tagName("td"))
+
+                for (i in jgdosIndex until cells.size.coerceAtMost(headers.size)) {
+                    val header = headers[i]
+                    val valueText = cells[i].text.trim()
+                    val value = valueText.toDoubleOrNull() ?: 0.0
+
+                    // Solo contar contribuciones válidas
+                    if (valueText.isNotEmpty() && valueText != "-") {
+                        if (i >= tppIndex) {
+                            contributionCounts[header] = (contributionCounts[header] ?: 0) + 1
+                        }
+                    }
+
+                    combinedStats[header] = (combinedStats[header] ?: 0.0) + value
+                }
+            }
+
+            // Convertir sumas a promedios para columnas desde TpP en adelante
+            for (i in tppIndex until headers.size) {
+                val header = headers[i]
+                if (header in combinedStats && (contributionCounts[header] ?: 0) > 0) {
+                    combinedStats[header] = combinedStats[header]!! / contributionCounts[header]!!
+                }
+            }
+
+            combinedStats
+        } finally {
+            driver.quit()
+        }
+    }
+
+    fun comparePlayerStatsWithHistory(playerName: String, year: String): Map<String, Map<String, String>> {
+        val currentStats = getPlayerData(playerName)
+        val historicalStats = getPlayerHistoricalRatingsByYear(playerName, year)
+        return compareStatsWithDiff(currentStats, historicalStats, "Actual", year)
+    }
+
+    private fun compareStatsWithDiff(
+        stats1: Map<String, Double>,
+        stats2: Map<String, Double>,
+        key1: String,
+        key2: String
+    ): Map<String, Map<String, String>> {
+        val allKeys = stats1.keys + stats2.keys
+
+        val map1 = mutableMapOf<String, String>()
+        val map2 = mutableMapOf<String, String>()
+
+        for (key in allKeys) {
+            val v1 = stats1[key] ?: 0.0
+            val v2 = stats2[key] ?: 0.0
+            val diff = v1 - v2
+            map1[key] = "$v1 (${String.format("%.2f", diff)})"
+            map2[key] = "$v2 (${String.format("%.2f", -diff)})"
+        }
+
+        return mapOf(
+            key1 to map1,
+            key2 to map2
+        )
     }
 
     fun getTeamData(teamName: String): Map<String, Double> {
@@ -144,10 +236,13 @@ class FootballDataScraping {
         val localStats = footballDataScraping.getTeamData(localTeam)
         val visitingStats = footballDataScraping.getTeamData(visitingTeam)
 
-        val weights = getWeights()
+        val weights = getWeights(localStats)
+
         val scoreLocal = calcScore(localStats, weights)
         val scoreVisiting = calcScore(visitingStats, weights)
-        val drawFactor = 1.0 - (abs(scoreLocal - scoreVisiting) / (scoreLocal + scoreVisiting + 1e-6))
+
+        val diff = abs(scoreLocal - scoreVisiting)
+        val drawFactor = exp(-diff / 5.0) // Penaliza el empate si hay mucha diferencia
         val scoreDraw = (scoreLocal + scoreVisiting) / 2 * drawFactor
 
         val expLocal = exp(scoreLocal)
@@ -166,23 +261,30 @@ class FootballDataScraping {
         )
     }
 
-    private fun getWeights(): Map<String, Double> = mapOf(
-        "Goles" to 0.25,
-        "Tiros pp" to 0.15,
-        "Posesion%" to 0.15,
-        "AciertoPase%" to 0.10,
-        "Aéreos" to 0.10,
-        "Rating" to 0.15,
-        "Yellow Cards" to 0.05,
-        "Red Cards" to 0.05
-    )
+    private fun getWeights(stats: Map<String, Double>): Map<String, Double> {
+        val weights = mutableMapOf<String, Double>()
+        for (key in stats.keys) {
+            val value = when (key) {
+                "Goles" -> 0.23
+                "Tiros pp" -> 0.15
+                "Posesion%" -> 0.15
+                "AciertoPase%" -> 0.15
+                "Aéreos" -> 0.10
+                "Rating" -> 0.15
+                "Yellow Cards" -> -0.02
+                "Red Cards" -> -0.05
+                else -> 0.0
+            }
+            weights[key] = value
+        }
+        return weights
+    }
 
     private fun calcScore(stats: Map<String, Double>, weights: Map<String, Double>): Double {
         var score = 0.0
-        for ((k, w) in weights) {
-            val v = stats[k] ?: 0.0
-            val norm = if (k.contains("%") || k.contains("Posesion") || k.contains("AciertoPase")) v / 100.0 else v
-            score += norm * w
+        for ((key, weight) in weights) {
+            val value = stats[key] ?: 0.0
+            score += value * weight
         }
         return score
     }
@@ -213,12 +315,7 @@ class FootballDataScraping {
         val driver = createDriver()
         return try {
             navigateAndAcceptCookies(driver, teamName)
-    
-            // Hacer clic en el submenú de navegación
-            val wait = WebDriverWait(driver, Duration.ofSeconds(30))
-            val subNav = wait.until(ExpectedConditions.elementToBeClickable(By.id("sub-navigation")))
-            val link = subNav.findElement(By.linkText("Encuentros"))
-            link.click()
+            val wait = clickOnSubNavigationLink(driver, "Encuentros")
     
             // Esperar a que aparezca el wrapper de fixtures
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("team-fixture-wrapper")))
@@ -256,23 +353,7 @@ class FootballDataScraping {
     ): Map<String, Map<String, String>> {
         val stats1 = getTeamData(team1)
         val stats2 = getTeamData(team2)
-        val allKeys = stats1.keys + stats2.keys
-
-        val team1Map = mutableMapOf<String, String>()
-        val team2Map = mutableMapOf<String, String>()
-
-        for (key in allKeys) {
-            val v1 = stats1[key] ?: 0.0
-            val v2 = stats2[key] ?: 0.0
-            val diff = v1 - v2
-            team1Map[key] = "$v1 (${String.format("%.2f", diff)})"
-            team2Map[key] = "$v2 (${String.format("%.2f", -diff)})"
-        }
-
-        return mapOf(
-            team1 to team1Map,
-            team2 to team2Map
-        )
+        return compareStatsWithDiff(stats1, stats2, team1, team2)
     }
 
 }

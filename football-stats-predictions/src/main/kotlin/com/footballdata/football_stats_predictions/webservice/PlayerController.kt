@@ -37,4 +37,12 @@ class PlayerController(private val footballDataScraping: FootballDataScraping) {
     ): Double {
         return footballDataScraping.getPlayerRatingsAverage(playerName)
     }
+
+    @GetMapping("/{playerName}/compare/{year}")
+    fun comparePlayerHistory(
+        @PathVariable playerName: String,
+        @PathVariable year: String
+    ): Map<String, Map<String, String>> {
+        return footballDataScraping.comparePlayerStatsWithHistory(playerName, year)
+    }
 }
