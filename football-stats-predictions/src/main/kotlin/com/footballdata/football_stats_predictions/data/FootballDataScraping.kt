@@ -1,5 +1,8 @@
 package com.footballdata.football_stats_predictions.data
 
+import com.footballdata.football_stats_predictions.model.PlayerStats
+import com.footballdata.football_stats_predictions.model.Stats
+import com.footballdata.football_stats_predictions.model.TeamStats
 import org.openqa.selenium.By
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
@@ -7,12 +10,8 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.springframework.stereotype.Component
 import java.time.Duration
-import kotlin.collections.get
-import kotlin.compareTo
 import kotlin.math.abs
 import kotlin.math.exp
-import kotlin.text.compareTo
-import kotlin.text.get
 
 @Component
 class FootballDataScraping {
@@ -40,7 +39,7 @@ class FootballDataScraping {
         resultLink.click()
     }
 
-    fun getPlayerData(playerName: String): Map<String, Double> {
+    fun getPlayerData(playerName: String): PlayerStats {
         val driver = createDriver()
         return try {
             navigateAndAcceptCookies(driver, playerName)
@@ -62,7 +61,7 @@ class FootballDataScraping {
                 val value = cells[i].text
                 stats[header] = value.toDoubleOrNull() ?: 0.0
             }
-            stats
+            PlayerStats(stats)
         } finally {
             driver.quit()
         }
@@ -97,7 +96,7 @@ class FootballDataScraping {
         }
     }
 
-    private fun getPlayerHistoricalRatingsByYear(playerName: String, year: String): Map<String, Double> {
+    private fun getPlayerHistoricalRatingsByYear(playerName: String, year: String): PlayerStats {
         val driver = createDriver()
         return try {
             navigateAndAcceptCookies(driver, playerName)
@@ -154,7 +153,7 @@ class FootballDataScraping {
                 }
             }
 
-            combinedStats
+            PlayerStats(combinedStats)
         } finally {
             driver.quit()
         }
@@ -167,8 +166,8 @@ class FootballDataScraping {
     }
 
     private fun compareStatsWithDiff(
-        stats1: Map<String, Double>,
-        stats2: Map<String, Double>,
+        stats1: Stats,
+        stats2: Stats,
         key1: String,
         key2: String
     ): Map<String, Map<String, String>> {
@@ -178,8 +177,8 @@ class FootballDataScraping {
         val map2 = mutableMapOf<String, String>()
 
         for (key in allKeys) {
-            val v1 = stats1[key] ?: 0.0
-            val v2 = stats2[key] ?: 0.0
+            val v1 = stats1[key]
+            val v2 = stats2[key]
             val diff = v1 - v2
             map1[key] = "$v1 (${String.format("%.2f", diff)})"
             map2[key] = "$v2 (${String.format("%.2f", -diff)})"
@@ -191,7 +190,7 @@ class FootballDataScraping {
         )
     }
 
-    fun getTeamData(teamName: String): Map<String, Double> {
+    fun getTeamData(teamName: String): TeamStats {
         val driver = createDriver()
         return try {
             navigateAndAcceptCookies(driver, teamName)
@@ -200,7 +199,7 @@ class FootballDataScraping {
             val tableBody = driver.findElement(By.id("top-team-stats-summary-content"))
             val tableHeader = driver.findElement(By.cssSelector("#top-team-stats-summary-grid thead"))
 
-            // Find the last row of the statistics table, and first row of the header
+            // Find the last row of the statistics table, and the first row of the header
             val totalRow = (tableBody.findElements(By.tagName("tr"))).last()
             val namesRow = (tableHeader.findElements(By.tagName("tr"))).first()
 
@@ -222,7 +221,7 @@ class FootballDataScraping {
                     stats[header] = value.toDoubleOrNull() ?: 0.0
                 }
             }
-            stats
+            TeamStats(stats)
         } finally {
             driver.quit()
         }
@@ -261,7 +260,7 @@ class FootballDataScraping {
         )
     }
 
-    private fun getWeights(stats: Map<String, Double>): Map<String, Double> {
+    private fun getWeights(stats: TeamStats): Map<String, Double> {
         val weights = mutableMapOf<String, Double>()
         for (key in stats.keys) {
             val value = when (key) {
@@ -280,38 +279,38 @@ class FootballDataScraping {
         return weights
     }
 
-    private fun calcScore(stats: Map<String, Double>, weights: Map<String, Double>): Double {
+    private fun calcScore(stats: TeamStats, weights: Map<String, Double>): Double {
         var score = 0.0
         for ((key, weight) in weights) {
-            val value = stats[key] ?: 0.0
+            val value = stats[key]
             score += value * weight
         }
         return score
     }
 
-    fun getTeamAdvancedStatistics(teamName: String): Map<String, Double> {
+    fun getTeamAdvancedStatistics(teamName: String): TeamStats {
         val stats = getTeamData(teamName)
         val advancedStats = getTeamGoalsAndShotEffectiveness(stats)
         val results = getTeamWinsDrawsLosses(teamName)
 
-        return advancedStats + results
+        return stats + advancedStats + results
     }
 
-    private fun getTeamGoalsAndShotEffectiveness(stats: Map<String, Double>): Map<String, Double> {
-        val goals = stats["Goles"] ?: 0.0
-        val apps = stats["Apps"] ?: 1.0 // Evita división por cero
-        val tirosPP = stats["Tiros pp"] ?: 0.0
+    private fun getTeamGoalsAndShotEffectiveness(stats: TeamStats): TeamStats {
+        val goals = stats["Goles"]
+        val apps = stats["Apps"].takeIf{ it != 0.0 } ?: 1.0 // Evita división por cero
+        val tirosPP = stats["Tiros pp"]
 
-        val goalsAGame = if (apps != 0.0) goals / apps else 0.0
+        val goalsAGame = goals / apps
         val efectividadDeTiros = if (goalsAGame != 0.0) tirosPP / goalsAGame else 0.0
 
-        return mapOf(
+        return TeamStats(mapOf(
             "Goles por Partido" to goalsAGame,
             "Efectividad de Tiros" to efectividadDeTiros
-        )
+        ))
     }
 
-    private fun getTeamWinsDrawsLosses(teamName: String): Map<String, Double> {
+    private fun getTeamWinsDrawsLosses(teamName: String): TeamStats {
         val driver = createDriver()
         return try {
             navigateAndAcceptCookies(driver, teamName)
@@ -336,12 +335,12 @@ class FootballDataScraping {
                     clazz.contains("box l") -> losses += 1.0
                 }
             }
-    
-            mapOf(
+
+            TeamStats(mapOf(
                 "Ganados" to wins,
                 "Empatados" to draws,
                 "Perdidos" to losses
-            )
+            ))
         } finally {
             driver.quit()
         }
