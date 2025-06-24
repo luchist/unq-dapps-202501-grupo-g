@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
+import com.footballdata.football_stats_predictions.data.FootballDataScraping
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import com.footballdata.football_stats_predictions.model.Team
@@ -26,6 +27,9 @@ class TeamServiceTest {
     private lateinit var footballDataAPI: FootballDataAPI
 
     @Mock
+    private lateinit var footballDataScraping: FootballDataScraping
+
+    @Mock
     private lateinit var playerRepository: PlayerRepository
 
     @Mock
@@ -35,7 +39,7 @@ class TeamServiceTest {
 
     @BeforeEach
     fun setup() {
-        teamService = TeamService(footballDataAPI, playerRepository, teamRepository)
+        teamService = TeamService(footballDataAPI, footballDataScraping, playerRepository, teamRepository)
     }
 
     @Test

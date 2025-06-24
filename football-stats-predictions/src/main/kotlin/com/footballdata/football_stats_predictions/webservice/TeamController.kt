@@ -43,7 +43,7 @@ class TeamController(
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
-                    endpoint = "/api/teams/$teamName",
+                    endpoint = "/api/team/$teamName",
                     queryParams = "teamName=$teamName",
                     status = 200
                 )
@@ -53,7 +53,7 @@ class TeamController(
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
-                    endpoint = "/api/teams/$teamName",
+                    endpoint = "/api/team/$teamName",
                     queryParams = "teamName=$teamName",
                     status = 404,
                     message = "Team not found." + e.message
@@ -88,7 +88,7 @@ class TeamController(
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
-                    endpoint = "/api/teams/$teamName/matches",
+                    endpoint = "/api/team/$teamName/matches",
                     queryParams = "teamName=$teamName",
                     status = 200
                 )
@@ -98,7 +98,7 @@ class TeamController(
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
-                    endpoint = "/api/teams/$teamName/matches",
+                    endpoint = "/api/team/$teamName/matches",
                     queryParams = "teamName=$teamName",
                     status = 404,
                     message = "Team not found." + e.message
