@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.webservice
 
 import com.footballdata.football_stats_predictions.data.FootballDataScraping
+import com.footballdata.football_stats_predictions.service.PlayerService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -14,7 +15,10 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/player")
 @Tag(name = "Player", description = "Player endpoints for retrieving player statistics")
-class PlayerController(private val footballDataScraping: FootballDataScraping) {
+class PlayerController(
+    private val footballDataScraping: FootballDataScraping,
+    private val playerService: PlayerService
+) {
     @Operation(
         summary = "Player endpoint",
         description = "Returns player data for authorized users"
@@ -28,14 +32,14 @@ class PlayerController(private val footballDataScraping: FootballDataScraping) {
     )
     @GetMapping("/{playerName}")
     fun getPlayerStats(@PathVariable playerName: String): Map<String, Double> {
-        return footballDataScraping.getPlayerData(playerName)
+        return playerService.getPlayerStats(playerName);
     }
 
     @GetMapping("/{playerName}/rating")
     fun getPlayerRatingsAverage(
         @PathVariable playerName: String
     ): Double {
-        return footballDataScraping.getPlayerRatingsAverage(playerName)
+        return playerService.getPlayerRatingsAverage(playerName)
     }
 
     @GetMapping("/{playerName}/compare/{year}")
@@ -43,6 +47,6 @@ class PlayerController(private val footballDataScraping: FootballDataScraping) {
         @PathVariable playerName: String,
         @PathVariable year: String
     ): Map<String, Map<String, String>> {
-        return footballDataScraping.comparePlayerStatsWithHistory(playerName, year)
+        return playerService.comparePlayerHistory(playerName, year)
     }
 }
