@@ -24,7 +24,7 @@ class TokenServiceTest {
     @Test
     fun `generateToken should create valid token with correct claims`() {
         // Arrange
-        val expiration = Date(System.currentTimeMillis() + 1000 * 60) // 1 minuto
+        val expiration = Date(System.currentTimeMillis() + 1000 * 60) // 1 minute
         val additionalClaims = mapOf("role" to "USER")
 
         // Act
@@ -51,7 +51,7 @@ class TokenServiceTest {
     @Test
     fun `extractUsername should throw exception when token is expired`() {
         // Arrange
-        val expiration = Date(System.currentTimeMillis() - 1000) // Token expirado
+        val expiration = Date(System.currentTimeMillis() - 1000) // Expired token
         val token = tokenService.generateToken(testUsername, expiration)
 
         // Act & Assert

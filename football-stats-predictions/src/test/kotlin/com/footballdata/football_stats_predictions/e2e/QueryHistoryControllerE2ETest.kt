@@ -42,10 +42,10 @@ class QueryHistoryControllerE2ETest {
     @Test
     fun `should return empty query history for new authenticated user`() {
         // Arrange
-        val uniqueUsername = "testuser_${System.currentTimeMillis()}"
+        val uniqueUsername = "test_user_${System.currentTimeMillis()}"
         val authRequest = AuthenticationRequest(
             username = uniqueUsername,
-            password = "testpassword123"
+            password = "test_password123"
         )
 
         // Register new user (this does not create query history)
@@ -188,8 +188,8 @@ class QueryHistoryControllerE2ETest {
     @Test
     fun `should return only user-specific query history`() {
         // Arrange - Create two different users
-        val user1Username = "testuser1_${System.currentTimeMillis()}"
-        val user2Username = "testuser2_${System.currentTimeMillis()}"
+        val user1Username = "test_user1_${System.currentTimeMillis()}"
+        val user2Username = "test_user2_${System.currentTimeMillis()}"
 
         // Register first user
         val user1AuthRequest = AuthenticationRequest(

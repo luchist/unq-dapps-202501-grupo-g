@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection", "SpellCheckingInspection")
+
 package com.footballdata.football_stats_predictions.e2e
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -31,8 +33,8 @@ class AuthControllerE2ETest {
     fun `should register new user successfully`() {
         // Arrange
         val registerRequest = RegisterRequest(
-            username = "testuser_${System.currentTimeMillis()}",
-            password = "testpassword123"
+            username = "test_user_${System.currentTimeMillis()}",
+            password = "test_password123"
         )
 
         // Act
@@ -55,7 +57,7 @@ class AuthControllerE2ETest {
         // Arrange
         val registerRequest = RegisterRequest(
             username = "",
-            password = "testpassword123"
+            password = "test_password123"
         )
 
         // Act
@@ -77,8 +79,8 @@ class AuthControllerE2ETest {
     @Test
     fun `should authenticate existing user successfully`() {
         // Arrange
-        val username = "authuser_${System.currentTimeMillis()}"
-        val password = "authpassword123"
+        val username = "auth_user_${System.currentTimeMillis()}"
+        val password = "auth_password123"
 
         val registerRequest = RegisterRequest(username = username, password = password)
         restTemplate.postForEntity("/api/auth/register", registerRequest, AuthenticationResponse::class.java)
@@ -103,8 +105,8 @@ class AuthControllerE2ETest {
     fun `should return 401 for invalid authentication credentials`() {
         // Arrange
         val authRequest = AuthenticationRequest(
-            username = "wronguser",
-            password = "wrongpassword"
+            username = "wrong_user",
+            password = "wrong_password"
         )
 
         // Act
@@ -131,8 +133,8 @@ class AuthControllerE2ETest {
     @Test
     fun `should refresh access token successfully`() {
         // Arrange - First register and authenticate a user
-        val username = "refreshuser_${System.currentTimeMillis()}"
-        val password = "refreshpassword123"
+        val username = "refresh_user_${System.currentTimeMillis()}"
+        val password = "refresh_password123"
 
         val registerRequest = RegisterRequest(username = username, password = password)
         val authResponse = restTemplate.postForEntity(
@@ -205,8 +207,8 @@ class AuthControllerE2ETest {
     @Test
     fun `should verify response headers for authentication endpoints`() {
         // Arrange
-        val username = "headeruser_${System.currentTimeMillis()}"
-        val password = "headerpassword123"
+        val username = "header_user_${System.currentTimeMillis()}"
+        val password = "header_password123"
         val registerRequest = RegisterRequest(username = username, password = password)
 
         // Act
