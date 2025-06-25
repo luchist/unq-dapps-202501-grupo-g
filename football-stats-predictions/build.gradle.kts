@@ -84,7 +84,7 @@ tasks.jacocoTestReport {
             fileTree(it) {
                 exclude(
                     "**/config/**",
-                    "**/dto/**",
+                    "**/data/**",
                     "**/FootballStatsPredictionsApplication.*", // Main application class
                     "**/*\$*.*" // Kotlin synthetic classes
                 )
