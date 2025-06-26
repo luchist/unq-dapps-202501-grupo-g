@@ -8,6 +8,7 @@ import com.footballdata.football_stats_predictions.model.Team
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
 import com.footballdata.football_stats_predictions.service.TeamService
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -46,11 +47,11 @@ class TeamServiceTest {
     fun `should return cached players when team exists in database`() {
         // Arrange
         val teamName = "Real Madrid"
-        val cachedPlayers = listOf(
+        val expectedCachedPlayers = listOf(
             PlayerBuilder().withPlayerName("Jugador1").build(),
             PlayerBuilder().withPlayerName("Jugador2").build()
         )
-        val cachedTeam = Team(teamName = teamName, players = cachedPlayers.toMutableList())
+        val cachedTeam = Team(teamName = teamName, players = expectedCachedPlayers.toMutableList())
 
         `when`(teamRepository.findByTeamName(teamName)).thenReturn(cachedTeam)
 
@@ -58,7 +59,7 @@ class TeamServiceTest {
         val result = teamService.getTeamComposition(teamName)
 
         // Assert
-        assert(result == cachedPlayers)
+        assertEquals(expectedCachedPlayers, result)
         verify(footballDataAPI, never()).getTeamComposition(any())
         verify(teamRepository, times(1)).findByTeamName(teamName)
     }
@@ -67,20 +68,20 @@ class TeamServiceTest {
     fun `should fetch from API and save when team does not exist`() {
         // Arrange
         val teamName = "Barcelona"
-        val apiPlayers = listOf(
+        val expectedApiPlayers = listOf(
             PlayerBuilder().withPlayerName("Jugador3").build(),
             PlayerBuilder().withPlayerName("Jugador4").build()
         )
 
         `when`(teamRepository.findByTeamName(teamName)).thenReturn(null)
-        `when`(footballDataAPI.getTeamComposition(teamName)).thenReturn(apiPlayers)
+        `when`(footballDataAPI.getTeamComposition(teamName)).thenReturn(expectedApiPlayers)
         `when`(playerRepository.findByPlayerName(any())).thenReturn(null)
 
         // Act
         val result = teamService.getTeamComposition(teamName)
 
         // Assert
-        assert(result == apiPlayers)
+        assertEquals(expectedApiPlayers, result)
         verify(teamRepository, times(1)).findByTeamName(teamName)
         verify(footballDataAPI, times(1)).getTeamComposition(teamName)
         verify(teamRepository, times(1)).save(any())
@@ -139,7 +140,7 @@ class TeamServiceTest {
         val result = teamService.getScheduledMatches(teamName)
 
         // Assert
-        assert(result == expectedMatches)
+        assertEquals(expectedMatches, result)
         verify(footballDataAPI, times(1)).getScheduledMatches(teamName)
     }
 
@@ -232,7 +233,7 @@ class TeamServiceTest {
         val result = teamService.getTeamAdvancedStatistics(teamName)
 
         // Assert
-        assert(result == expectedAdvancedStats)
+        assertEquals(expectedAdvancedStats, result)
         verify(footballDataScraping, times(1)).getTeamAdvancedStatistics(teamName)
     }
 
@@ -268,7 +269,7 @@ class TeamServiceTest {
         val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
-        assert(result == expectedProbabilities)
+        assertEquals(expectedProbabilities, result)
         verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
@@ -277,20 +278,20 @@ class TeamServiceTest {
         // Arrange
         val localTeam = "Valencia"
         val awayTeam = "Sevilla"
-        val equalProbabilities = mapOf(
+        val expectedEqualProbabilities = mapOf(
             "Local Win" to 33.3,
             "Draw" to 33.4,
             "Visiting Win" to 33.3
         )
 
         `when`(footballDataScraping.predictMatchProbabilities(localTeam, awayTeam))
-            .thenReturn(equalProbabilities)
+            .thenReturn(expectedEqualProbabilities)
 
         // Act
         val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
-        assert(result == equalProbabilities)
+        assertEquals(expectedEqualProbabilities, result)
         verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
@@ -323,7 +324,7 @@ class TeamServiceTest {
                 "Rating" to "6.84 (-0.02)"
             )
         )
-        
+
         `when`(footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam))
             .thenReturn(expectedComparison)
 
@@ -331,7 +332,7 @@ class TeamServiceTest {
         val result = teamService.compareTeams(localTeam, awayTeam)
 
         // Assert
-        assert(result == expectedComparison)
+        assertEquals(expectedComparison, result)
         verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 
