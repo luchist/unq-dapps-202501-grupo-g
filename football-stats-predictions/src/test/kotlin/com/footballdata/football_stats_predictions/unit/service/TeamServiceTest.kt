@@ -47,11 +47,11 @@ class TeamServiceTest {
     fun `should return cached players when team exists in database`() {
         // Arrange
         val teamName = "Real Madrid"
-        val cachedPlayers = listOf(
+        val expectedCachedPlayers = listOf(
             PlayerBuilder().withPlayerName("Jugador1").build(),
             PlayerBuilder().withPlayerName("Jugador2").build()
         )
-        val cachedTeam = Team(teamName = teamName, players = cachedPlayers.toMutableList())
+        val cachedTeam = Team(teamName = teamName, players = expectedCachedPlayers.toMutableList())
 
         `when`(teamRepository.findByTeamName(teamName)).thenReturn(cachedTeam)
 
@@ -59,7 +59,7 @@ class TeamServiceTest {
         val result = teamService.getTeamComposition(teamName)
 
         // Assert
-        assertEquals(result, cachedPlayers)
+        assertEquals(expectedCachedPlayers, result)
         verify(footballDataAPI, never()).getTeamComposition(any())
         verify(teamRepository, times(1)).findByTeamName(teamName)
     }
@@ -68,20 +68,20 @@ class TeamServiceTest {
     fun `should fetch from API and save when team does not exist`() {
         // Arrange
         val teamName = "Barcelona"
-        val apiPlayers = listOf(
+        val expectedApiPlayers = listOf(
             PlayerBuilder().withPlayerName("Jugador3").build(),
             PlayerBuilder().withPlayerName("Jugador4").build()
         )
 
         `when`(teamRepository.findByTeamName(teamName)).thenReturn(null)
-        `when`(footballDataAPI.getTeamComposition(teamName)).thenReturn(apiPlayers)
+        `when`(footballDataAPI.getTeamComposition(teamName)).thenReturn(expectedApiPlayers)
         `when`(playerRepository.findByPlayerName(any())).thenReturn(null)
 
         // Act
         val result = teamService.getTeamComposition(teamName)
 
         // Assert
-        assertEquals(result, apiPlayers)
+        assertEquals(expectedApiPlayers, result)
         verify(teamRepository, times(1)).findByTeamName(teamName)
         verify(footballDataAPI, times(1)).getTeamComposition(teamName)
         verify(teamRepository, times(1)).save(any())
@@ -140,7 +140,7 @@ class TeamServiceTest {
         val result = teamService.getScheduledMatches(teamName)
 
         // Assert
-        assertEquals(result, expectedMatches)
+        assertEquals(expectedMatches, result)
         verify(footballDataAPI, times(1)).getScheduledMatches(teamName)
     }
 
@@ -233,7 +233,7 @@ class TeamServiceTest {
         val result = teamService.getTeamAdvancedStatistics(teamName)
 
         // Assert
-        assertEquals(result, expectedAdvancedStats)
+        assertEquals(expectedAdvancedStats, result)
         verify(footballDataScraping, times(1)).getTeamAdvancedStatistics(teamName)
     }
 
@@ -269,7 +269,7 @@ class TeamServiceTest {
         val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
-        assertEquals(result, expectedProbabilities)
+        assertEquals(expectedProbabilities, result)
         verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
@@ -278,20 +278,20 @@ class TeamServiceTest {
         // Arrange
         val localTeam = "Valencia"
         val awayTeam = "Sevilla"
-        val equalProbabilities = mapOf(
+        val expectedEqualProbabilities = mapOf(
             "Local Win" to 33.3,
             "Draw" to 33.4,
             "Visiting Win" to 33.3
         )
 
         `when`(footballDataScraping.predictMatchProbabilities(localTeam, awayTeam))
-            .thenReturn(equalProbabilities)
+            .thenReturn(expectedEqualProbabilities)
 
         // Act
         val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
-        assertEquals(result, equalProbabilities)
+        assertEquals(expectedEqualProbabilities, result)
         verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
@@ -332,7 +332,7 @@ class TeamServiceTest {
         val result = teamService.compareTeams(localTeam, awayTeam)
 
         // Assert
-        assertEquals(result, expectedComparison)
+        assertEquals(expectedComparison, result)
         verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 
