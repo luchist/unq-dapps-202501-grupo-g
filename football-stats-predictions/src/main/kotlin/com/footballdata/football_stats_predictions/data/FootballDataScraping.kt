@@ -3,46 +3,20 @@ package com.footballdata.football_stats_predictions.data
 import com.footballdata.football_stats_predictions.model.PlayerStats
 import com.footballdata.football_stats_predictions.model.Stats
 import com.footballdata.football_stats_predictions.model.TeamStats
+import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
-import org.openqa.selenium.WebDriver
-import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
 import org.springframework.stereotype.Component
-import java.time.Duration
 import kotlin.math.abs
 import kotlin.math.exp
 
 @Component
 class FootballDataScraping {
 
-    private fun createDriver(): WebDriver {
-        return ChromeDriver()
-    }
-
-    private fun navigateAndAcceptCookies(driver: WebDriver, searchTerm: String) {
-        driver.get("https://es.whoscored.com/Search/?t=$searchTerm")
-        val wait = WebDriverWait(driver, Duration.ofSeconds(60))
-
-        // Aceptar cookies si aparece el botón
-        try {
-            val acceptCookiesButton = wait.until(
-                ExpectedConditions.elementToBeClickable(By.cssSelector(".css-1wc0q5e"))
-            )
-            acceptCookiesButton.click()
-        } catch (_: Exception) {}
-
-        // Esperar y hacer clic en el primer resultado (equipo o jugador)
-        val resultLink = wait.until(
-            ExpectedConditions.elementToBeClickable(By.cssSelector(".search-result a"))
-        )
-        resultLink.click()
-    }
-
     fun getPlayerData(playerName: String): PlayerStats {
-        val driver = createDriver()
+        val driver = WebDriverUtils.createDriver()
         return try {
-            navigateAndAcceptCookies(driver, playerName)
+            WebDriverUtils.navigateAndAcceptCookies(driver, playerName)
 
             // Busca el body de la tabla de estadística
             val tableBody = driver.findElement(By.id("player-table-statistics-body"))
@@ -67,19 +41,12 @@ class FootballDataScraping {
         }
     }
 
-    private fun clickOnSubNavigationLink(driver: WebDriver, linkText: String): WebDriverWait {
-        val wait = WebDriverWait(driver, Duration.ofSeconds(30))
-        val subNav = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("sub-navigation")))
-        val link = subNav.findElement(By.linkText(linkText))
-        link.click()
-        return wait
-    }
 
     fun getPlayerRatingsAverage(playerName: String): Double {
-        val driver = createDriver()
+        val driver = WebDriverUtils.createDriver()
         return try {
-            navigateAndAcceptCookies(driver, playerName)
-            val wait = clickOnSubNavigationLink(driver, "Estadísticas del Partido")
+            WebDriverUtils.navigateAndAcceptCookies(driver, playerName)
+            val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Estadísticas del Partido")
 
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary-matches")))
             val statsDiv = driver.findElement(By.id("statistics-table-summary-matches"))
@@ -97,10 +64,10 @@ class FootballDataScraping {
     }
 
     private fun getPlayerHistoricalRatingsByYear(playerName: String, year: String): PlayerStats {
-        val driver = createDriver()
+        val driver = WebDriverUtils.createDriver()
         return try {
-            navigateAndAcceptCookies(driver, playerName)
-            val wait = clickOnSubNavigationLink(driver, "Historial")
+            WebDriverUtils.navigateAndAcceptCookies(driver, playerName)
+            val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Historial")
 
             // Esperar a que aparezca la tabla de estadísticas históricas
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary")))
@@ -191,9 +158,9 @@ class FootballDataScraping {
     }
 
     fun getTeamData(teamName: String): TeamStats {
-        val driver = createDriver()
+        val driver = WebDriverUtils.createDriver()
         return try {
-            navigateAndAcceptCookies(driver, teamName)
+            WebDriverUtils.navigateAndAcceptCookies(driver, teamName)
 
             // Find the team statistics table body and header
             val tableBody = driver.findElement(By.id("top-team-stats-summary-content"))
@@ -231,9 +198,9 @@ class FootballDataScraping {
         localTeam: String,
         visitingTeam: String
     ): Map<String, Double> {
-        val footballDataScraping = FootballDataScraping()
-        val localStats = footballDataScraping.getTeamData(localTeam)
-        val visitingStats = footballDataScraping.getTeamData(visitingTeam)
+        // val footballDataScraping = FootballDataScraping()
+        val localStats = this.getTeamData(localTeam)
+        val visitingStats = this.getTeamData(visitingTeam)
 
         val weights = getWeights(localStats)
 
@@ -311,10 +278,10 @@ class FootballDataScraping {
     }
 
     private fun getTeamWinsDrawsLosses(teamName: String): TeamStats {
-        val driver = createDriver()
+        val driver = WebDriverUtils.createDriver()
         return try {
-            navigateAndAcceptCookies(driver, teamName)
-            val wait = clickOnSubNavigationLink(driver, "Encuentros")
+            WebDriverUtils.navigateAndAcceptCookies(driver, teamName)
+            val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Encuentros")
     
             // Esperar a que aparezca el wrapper de fixtures
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("team-fixture-wrapper")))
