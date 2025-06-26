@@ -10,11 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.core.ParameterizedTypeReference
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 
@@ -46,10 +42,10 @@ class QueryHistoryControllerE2ETest {
     @Test
     fun `should return empty query history for new authenticated user`() {
         // Arrange
-        val uniqueUsername = "testuser_${System.currentTimeMillis()}"
+        val uniqueUsername = "test_user_${System.currentTimeMillis()}"
         val authRequest = AuthenticationRequest(
             username = uniqueUsername,
-            password = "testpassword123"
+            password = "test_password123"
         )
 
         // Register new user (this does not create query history)
@@ -104,7 +100,7 @@ class QueryHistoryControllerE2ETest {
 
         // Act - Access a tracked endpoint (this will create query history)
         restTemplate.exchange(
-            "/api/teams/80",
+            "/api/team/1769",
             HttpMethod.GET,
             httpEntity,
             String::class.java
@@ -129,8 +125,8 @@ class QueryHistoryControllerE2ETest {
         val latestQuery = queryHistory[0] // Should be ordered by timestamp desc
 
         Assertions.assertThat(latestQuery.userName).isEqualTo("email-1@gmail.com")
-        Assertions.assertThat(latestQuery.endpoint).isEqualTo("/api/teams/80")
-        Assertions.assertThat(latestQuery.queryParameters).isEqualTo("teamName=80")
+        Assertions.assertThat(latestQuery.endpoint).isEqualTo("/api/team/1769")
+        Assertions.assertThat(latestQuery.queryParameters).isEqualTo("teamName=1769")
         Assertions.assertThat(latestQuery.responseStatus).isEqualTo(200)
         Assertions.assertThat(latestQuery.timestamp).isNotNull
     }
@@ -158,7 +154,7 @@ class QueryHistoryControllerE2ETest {
 
         // Act - Access a tracked endpoint that will fail (this will create query history with error)
         restTemplate.exchange(
-            "/api/teams/99999",
+            "/api/team/99999",
             HttpMethod.GET,
             httpEntity,
             String::class.java
@@ -183,7 +179,7 @@ class QueryHistoryControllerE2ETest {
 
         Assertions.assertThat(failedQuery).isNotNull
         Assertions.assertThat(failedQuery!!.userName).isEqualTo("email-1@gmail.com")
-        Assertions.assertThat(failedQuery.endpoint).isEqualTo("/api/teams/99999")
+        Assertions.assertThat(failedQuery.endpoint).isEqualTo("/api/team/99999")
         Assertions.assertThat(failedQuery.queryParameters).isEqualTo("teamName=99999")
         Assertions.assertThat(failedQuery.responseStatus).isEqualTo(404)
         Assertions.assertThat(failedQuery.responseMessage).contains("Team not found")
@@ -192,8 +188,8 @@ class QueryHistoryControllerE2ETest {
     @Test
     fun `should return only user-specific query history`() {
         // Arrange - Create two different users
-        val user1Username = "testuser1_${System.currentTimeMillis()}"
-        val user2Username = "testuser2_${System.currentTimeMillis()}"
+        val user1Username = "test_user1_${System.currentTimeMillis()}"
+        val user2Username = "test_user2_${System.currentTimeMillis()}"
 
         // Register first user
         val user1AuthRequest = AuthenticationRequest(
@@ -225,7 +221,7 @@ class QueryHistoryControllerE2ETest {
         val user1Entity = HttpEntity<String>(null, user1Headers)
 
         restTemplate.exchange(
-            "/api/teams/80",
+            "/api/team/1769",
             HttpMethod.GET,
             user1Entity,
             String::class.java

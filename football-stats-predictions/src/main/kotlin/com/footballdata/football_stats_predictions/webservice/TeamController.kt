@@ -16,13 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/teams")
+@RequestMapping("/api/team")
 @Tag(name = "Team", description = "Endpoints for team-related operations")
 class TeamController(
     @field:Autowired var teamService: TeamService,
     @field:Autowired var queryHistoryService: QueryHistoryService
 ) {
-
     @Operation(summary = "Get all team members", description = "Returns a list of Players of a Team")
     @ApiResponses(
         value = [
@@ -44,7 +43,7 @@ class TeamController(
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
-                    endpoint = "/api/teams/$teamName",
+                    endpoint = "/api/team/$teamName",
                     queryParams = "teamName=$teamName",
                     status = 200
                 )
@@ -54,7 +53,7 @@ class TeamController(
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
-                    endpoint = "/api/teams/$teamName",
+                    endpoint = "/api/team/$teamName",
                     queryParams = "teamName=$teamName",
                     status = 404,
                     message = "Team not found." + e.message
@@ -89,7 +88,7 @@ class TeamController(
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
-                    endpoint = "/api/teams/$teamName/matches",
+                    endpoint = "/api/team/$teamName/matches",
                     queryParams = "teamName=$teamName",
                     status = 200
                 )
@@ -99,7 +98,7 @@ class TeamController(
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
-                    endpoint = "/api/teams/$teamName/matches",
+                    endpoint = "/api/team/$teamName/matches",
                     queryParams = "teamName=$teamName",
                     status = 404,
                     message = "Team not found." + e.message
@@ -112,4 +111,67 @@ class TeamController(
             ResponseEntity.status(404).body(errorBody)
         }
     }
+
+    @Operation(summary = "Get team statistics", description = "Returns a list of statistics of a Team")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "List of statistics returned successfully"),
+            ApiResponse(responseCode = "403", description = "Access denied for unauthorized users"),
+            ApiResponse(responseCode = "404", description = "Team not found")
+        ]
+    )
+    @GetMapping("/stats/{teamName}")
+    fun getTeamStats(@PathVariable teamName: String): Map<String, Double> {
+        return teamService.getTeamStatistics(teamName)
+    }
+
+    @Operation(
+        summary = "Get Team advanced statistics",
+        description = "Returns a list of advanced statistics of a Team"
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "List of advanced statistics returned successfully"),
+            ApiResponse(responseCode = "403", description = "Access denied for unauthorized users"),
+            ApiResponse(responseCode = "404", description = "Team was not found")
+        ]
+    )
+    @GetMapping("/advanced/{teamName}")
+    fun getTeamAdvancedStatistics(@PathVariable teamName: String): Map<String, Double> {
+        return teamService.getTeamAdvancedStatistics(teamName)
+    }
+
+    @Operation(summary = "Get prediction match between two teams", description = "Returns a list of predictions")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "List of predictions returned successfully"),
+            ApiResponse(responseCode = "403", description = "Access denied for unauthorized users"),
+            ApiResponse(responseCode = "404", description = "One or more teams was not found")
+        ]
+    )
+    @GetMapping("/predict/{localTeam}/{awayTeam}")
+    fun predictMatchProbabilities(
+        @PathVariable localTeam: String,
+        @PathVariable awayTeam: String
+    ): Map<String, Double> {
+        return teamService.predictMatchProbabilities(localTeam, awayTeam)
+    }
+
+
+    @Operation(summary = "Get comparison between two teams", description = "Returns a comparison of two teams")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Comparison returned successfully"),
+            ApiResponse(responseCode = "403", description = "Access denied for unauthorized users"),
+            ApiResponse(responseCode = "404", description = "One or more teams was not found")
+        ]
+    )
+    @GetMapping("/compare/{localTeam}/{awayTeam}")
+    fun compareTeams(
+        @PathVariable localTeam: String,
+        @PathVariable awayTeam: String
+    ): Map<String, Map<String, String>> {
+        return teamService.compareTeams(localTeam, awayTeam)
+    }
+
 }

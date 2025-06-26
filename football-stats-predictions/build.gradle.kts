@@ -33,6 +33,9 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
     implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+    implementation("org.seleniumhq.selenium:selenium-java:4.20.0")
+    implementation("org.seleniumhq.selenium:selenium-chrome-driver:4.20.0")
+    implementation("org.seleniumhq.selenium:selenium-support:4.20.0")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.h2database:h2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -81,7 +84,7 @@ tasks.jacocoTestReport {
             fileTree(it) {
                 exclude(
                     "**/config/**",
-                    "**/dto/**",
+                    "**/data/**",
                     "**/FootballStatsPredictionsApplication.*", // Main application class
                     "**/*\$*.*" // Kotlin synthetic classes
                 )

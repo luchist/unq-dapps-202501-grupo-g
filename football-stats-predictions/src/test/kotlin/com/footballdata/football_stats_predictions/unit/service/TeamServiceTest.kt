@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
+import com.footballdata.football_stats_predictions.data.FootballDataScraping
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import com.footballdata.football_stats_predictions.model.Team
@@ -26,6 +27,9 @@ class TeamServiceTest {
     private lateinit var footballDataAPI: FootballDataAPI
 
     @Mock
+    private lateinit var footballDataScraping: FootballDataScraping
+
+    @Mock
     private lateinit var playerRepository: PlayerRepository
 
     @Mock
@@ -35,7 +39,7 @@ class TeamServiceTest {
 
     @BeforeEach
     fun setup() {
-        teamService = TeamService(footballDataAPI, playerRepository, teamRepository)
+        teamService = TeamService(footballDataAPI, footballDataScraping, playerRepository, teamRepository)
     }
 
     @Test
@@ -166,5 +170,201 @@ class TeamServiceTest {
             teamService.getScheduledMatches(teamName)
         }
         verify(footballDataAPI, times(1)).getScheduledMatches(teamName)
+    }
+
+    @Test
+    fun `should return team statistics from scraping service`() {
+        // Arrange
+        val teamName = "Barcelona"
+        val expectedStats = mapOf(
+            "Apps" to 25.0,
+            "Goles" to 47.0,
+            "Tiros pp" to 12.8,
+            "Yellow Cards" to 44.0,
+            "Red Cards" to 0.0,
+            "Posesion%" to 54.5,
+            "AciertoPase%" to 86.0,
+            "Aéreos" to 12.4,
+            "Rating" to 6.62
+        )
+
+        `when`(footballDataScraping.getTeamData(teamName)).thenReturn(expectedStats)
+
+        // Act
+        val result = teamService.getTeamStatistics(teamName)
+
+        // Assert
+        assertEquals(expectedStats, result)
+        verify(footballDataScraping, times(1)).getTeamData(teamName)
+    }
+
+    @Test
+    fun `should return empty map when no team statistics available`() {
+        // Arrange
+        val teamName = "UnknownTeam"
+        val emptyStats = emptyMap<String, Double>()
+
+        `when`(footballDataScraping.getTeamData(teamName)).thenReturn(emptyStats)
+
+        // Act
+        val result = teamService.getTeamStatistics(teamName)
+
+        // Assert
+        assert(result.isEmpty())
+        verify(footballDataScraping, times(1)).getTeamData(teamName)
+    }
+
+    @Test
+    fun `should return advanced team statistics from scraping service`() {
+        // Arrange
+        val teamName = "Real Madrid"
+        val expectedAdvancedStats = mapOf(
+            "Goles por Partido" to 2.19,
+            "Efectividad de Tiros" to 7.35,
+            "Ganados" to 42.0,
+            "Empatados" to 8.0,
+            "Perdidos" to 13.0
+        )
+
+        `when`(footballDataScraping.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
+
+        // Act
+        val result = teamService.getTeamAdvancedStatistics(teamName)
+
+        // Assert
+        assert(result == expectedAdvancedStats)
+        verify(footballDataScraping, times(1)).getTeamAdvancedStatistics(teamName)
+    }
+
+    @Test
+    fun `should propagate exception when scraping fails for advanced statistics`() {
+        // Arrange
+        val teamName = "Barcelona"
+        `when`(footballDataScraping.getTeamAdvancedStatistics(teamName))
+            .thenThrow(RuntimeException("Scraping Error"))
+
+        // Act & Assert
+        assertThrows<RuntimeException> {
+            teamService.getTeamAdvancedStatistics(teamName)
+        }
+        verify(footballDataScraping, times(1)).getTeamAdvancedStatistics(teamName)
+    }
+
+    @Test
+    fun `should return match prediction probabilities from scraping service`() {
+        // Arrange
+        val localTeam = "Barcelona"
+        val awayTeam = "Real Madrid"
+        val expectedProbabilities = mapOf(
+            "Local Win" to 45.2,
+            "Draw" to 28.5,
+            "Visiting Win" to 26.3
+        )
+
+        `when`(footballDataScraping.predictMatchProbabilities(localTeam, awayTeam))
+            .thenReturn(expectedProbabilities)
+
+        // Act
+        val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
+
+        // Assert
+        assert(result == expectedProbabilities)
+        verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+    }
+
+    @Test
+    fun `should handle equal probability predictions`() {
+        // Arrange
+        val localTeam = "Valencia"
+        val awayTeam = "Sevilla"
+        val equalProbabilities = mapOf(
+            "Local Win" to 33.3,
+            "Draw" to 33.4,
+            "Visiting Win" to 33.3
+        )
+
+        `when`(footballDataScraping.predictMatchProbabilities(localTeam, awayTeam))
+            .thenReturn(equalProbabilities)
+
+        // Act
+        val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
+
+        // Assert
+        assert(result == equalProbabilities)
+        verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+    }
+
+    @Test
+    fun `should return team comparison data from scraping service`() {
+        // Arrange
+        val localTeam = "Barcelona"
+        val awayTeam = "Real Madrid"
+        val expectedComparison = mapOf(
+            "barcelona" to mapOf(
+                "Apps" to "60.0 (-3.00)",
+                "Goles" to "174.0 (36.00)",
+                "Tiros pp" to "17.3 (1.20)",
+                "Yellow Cards" to "89.0 (-22.00)",
+                "Red Cards" to "6.0 (-3.00)",
+                "Posesion%" to "67.4 (9.10)",
+                "AciertoPase%" to "88.4 (-1.40)",
+                "Aéreos" to "10.1 (1.80)",
+                "Rating" to "6.86 (0.02)"
+            ),
+            "real madrid" to mapOf(
+                "Apps" to "63.0 (3.00)",
+                "Goles" to "138.0 (-36.00)",
+                "Tiros pp" to "16.1 (-1.20)",
+                "Yellow Cards" to "111.0 (22.00)",
+                "Red Cards" to "9.0 (3.00)",
+                "Posesion%" to "58.3 (-9.10)",
+                "AciertoPase%" to "89.8 (1.40)",
+                "Aéreos" to "8.3 (-1.80)",
+                "Rating" to "6.84 (-0.02)"
+            )
+        )
+        
+        `when`(footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam))
+            .thenReturn(expectedComparison)
+
+        // Act
+        val result = teamService.compareTeams(localTeam, awayTeam)
+
+        // Assert
+        assert(result == expectedComparison)
+        verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
+    }
+
+    @Test
+    fun `should handle empty team comparison when teams not found`() {
+        // Arrange
+        val localTeam = "UnknownTeam1"
+        val awayTeam = "UnknownTeam2"
+        val emptyComparison = emptyMap<String, Map<String, String>>()
+
+        `when`(footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam))
+            .thenReturn(emptyComparison)
+
+        // Act
+        val result = teamService.compareTeams(localTeam, awayTeam)
+
+        // Assert
+        assert(result.isEmpty())
+        verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
+    }
+
+    @Test
+    fun `should propagate exception when scraping fails for team comparison`() {
+        // Arrange
+        val localTeam = "Barcelona"
+        val awayTeam = "Real Madrid"
+        `when`(footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam))
+            .thenThrow(RuntimeException("Comparison scraping failed"))
+
+        // Act & Assert
+        assertThrows<RuntimeException> {
+            teamService.compareTeams(localTeam, awayTeam)
+        }
+        verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 }

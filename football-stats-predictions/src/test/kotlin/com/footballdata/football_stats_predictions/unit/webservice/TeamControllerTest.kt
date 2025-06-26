@@ -119,4 +119,112 @@ class TeamControllerTest {
         assertEquals(expectedMatches, result.body)
         verify(teamService).getScheduledMatches(teamName)
     }
+
+    @Test
+    fun `getTeamStats should return team statistics`() {
+        // Arrange
+        val teamName = "Barcelona"
+        val expectedStats = mapOf(
+            "Apps" to 25.0,
+            "Goles" to 47.0,
+            "Tiros pp" to 12.8,
+            "Yellow Cards" to 44.0,
+            "Red Cards" to 0.0,
+            "Posesion%" to 54.5,
+            "AciertoPase%" to 86.0,
+            "Aéreos" to 12.4,
+            "Rating" to 6.62
+        )
+
+        `when`(teamService.getTeamStatistics(teamName)).thenReturn(expectedStats)
+
+        // Act
+        val result = teamController.getTeamStats(teamName)
+
+        // Assert
+        assertEquals(expectedStats, result)
+        verify(teamService).getTeamStatistics(teamName)
+    }
+
+    @Test
+    fun `getTeamAdvancedStatistics should return advanced team statistics`() {
+        // Arrange
+        val teamName = "Barcelona"
+        val expectedAdvancedStats = mapOf(
+            "Goles por Partido" to 1.3846153846153846,
+            "Efectividad de Tiros" to 13.505555555555555,
+            "Ganados" to 25.0,
+            "Empatados" to 12.0,
+            "Perdidos" to 13.0
+        )
+
+        `when`(teamService.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
+
+        // Act
+        val result = teamController.getTeamAdvancedStatistics(teamName)
+
+        // Assert
+        assertEquals(expectedAdvancedStats, result)
+        verify(teamService).getTeamAdvancedStatistics(teamName)
+    }
+
+    @Test
+    fun `predictMatchProbabilities should return match prediction probabilities`() {
+        // Arrange
+        val localTeam = "Barcelona"
+        val awayTeam = "Real Madrid"
+        val expectedProbabilities = mapOf(
+            "Local Win" to 45.2,
+            "Draw" to 28.5,
+            "Visiting Win" to 26.3
+        )
+        `when`(teamService.predictMatchProbabilities(localTeam, awayTeam)).thenReturn(expectedProbabilities)
+
+        // Act
+        val result = teamController.predictMatchProbabilities(localTeam, awayTeam)
+
+        // Assert
+        assertEquals(expectedProbabilities, result)
+        verify(teamService).predictMatchProbabilities(localTeam, awayTeam)
+    }
+
+    @Test
+    fun `compareTeams should return team comparison data`() {
+        // Arrange
+        val localTeam = "Barcelona"
+        val awayTeam = "Real Madrid"
+        val expectedComparison = mapOf(
+            "boca juniors" to mapOf(
+                "Apps" to "13.0 (-41.00)",
+                "Goles" to "18.0 (-132.00)",
+                "Tiros pp" to "18.7 (-0.70)",
+                "Yellow Cards" to "29.0 (-44.00)",
+                "Red Cards" to "5.0 (2.00)",
+                "Posesion%" to "47.1 (-20.70)",
+                "AciertoPase%" to "81.6 (-8.20)",
+                "Aéreos" to "14.3 (2.00)",
+                "Rating" to "6.58 (-0.35)"
+            ),
+            "bayern munich" to mapOf(
+                "Apps" to "54.0 (41.00)",
+                "Goles" to "150.0 (132.00)",
+                "Tiros pp" to "19.4 (0.70)",
+                "Yellow Cards" to "73.0 (44.00)",
+                "Red Cards" to "3.0 (-2.00)",
+                "Posesion%" to "67.8 (20.70)",
+                "AciertoPase%" to "89.8 (8.20)",
+                "Aéreos" to "12.3 (-2.00)",
+                "Rating" to "6.93 (0.35)"
+            ),
+        )
+
+        `when`(teamService.compareTeams(localTeam, awayTeam)).thenReturn(expectedComparison)
+
+        // Act
+        val result = teamController.compareTeams(localTeam, awayTeam)
+
+        // Assert
+        assertEquals(expectedComparison, result)
+        verify(teamService).compareTeams(localTeam, awayTeam)
+    }
 }

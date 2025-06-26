@@ -25,7 +25,7 @@ class AuthenticationServiceTest {
     private lateinit var tokenService: TokenService
     private lateinit var refreshTokenRepository: RefreshTokenRepository
 
-    private val accessTokenExpiration = 300000L // 5 minutos
+    private val accessTokenExpiration = 300000L // 5 minutes
     private val refreshTokenExpiration = 3600000L // 1 hora
     private val testUsername = "testUser"
     private val testPassword = "testPassword"
@@ -100,13 +100,14 @@ class AuthenticationServiceTest {
             .thenReturn(mockAuthentication)
         `when`(userDetailsService.loadUserByUsername(testUsername))
             .thenReturn(mockUserDetails)
-        `when`(tokenService.generateToken
+        `when`(
+            tokenService.generateToken
                 (
                 any<String>(),
                 any<Date>(),
                 any<Map<String, Any>>()
-                )
             )
+        )
             .thenReturn(expectedAccessToken)
             .thenReturn(expectedRefreshToken)
 
@@ -138,12 +139,13 @@ class AuthenticationServiceTest {
             .thenReturn(mockUserDetails)
         `when`(refreshTokenRepository.findUserDetailsByToken(validRefreshToken))
             .thenReturn(mockUserDetails)
-        `when`(tokenService.generateToken(
+        `when`(
+            tokenService.generateToken(
                 any<String>(),
                 any<Date>(),
                 any<Map<String, String>>()
-                )
             )
+        )
             .thenReturn(newAccessToken)
 
         // Act
@@ -170,12 +172,13 @@ class AuthenticationServiceTest {
             .thenReturn(mockAuthentication)
         `when`(userDetailsService.loadUserByUsername(testUsername))
             .thenReturn(mockUserDetails)
-        `when`(tokenService.generateToken(
+        `when`(
+            tokenService.generateToken(
                 any<String>(),
                 any<Date>(),
                 any<Map<String, Any>>()
-                )
             )
+        )
             .thenReturn("access.token")
             .thenReturn("refresh.token")
 
@@ -185,7 +188,7 @@ class AuthenticationServiceTest {
         // Assert
         verify(authManager).authenticate(argThat { authToken ->
             authToken.principal == testUsername &&
-            authToken.credentials == testPassword
+                    authToken.credentials == testPassword
         })
     }
 
@@ -203,12 +206,13 @@ class AuthenticationServiceTest {
             .thenReturn(mockAuthentication)
         `when`(userDetailsService.loadUserByUsername(testUsername))
             .thenReturn(mockUserDetails)
-        `when`(tokenService.generateToken(
+        `when`(
+            tokenService.generateToken(
                 any<String>(),
                 any<Date>(),
                 any<Map<String, Any>>()
-                )
             )
+        )
             .thenReturn("access.token")
             .thenReturn(expectedRefreshToken)
 

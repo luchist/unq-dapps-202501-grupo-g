@@ -26,7 +26,7 @@ class TeamControllerE2ETest {
     @Test
     fun `should return 401 without authentication and valid team`() {
         val response: ResponseEntity<String> = restTemplate.getForEntity(
-            "/api/teams/80",
+            "/api/team/1769",
             String::class.java
         )
 
@@ -65,7 +65,7 @@ class TeamControllerE2ETest {
         val httpEntity = HttpEntity<String>(null, httpHeaders)
 
         val response: ResponseEntity<String> = restTemplate.exchange(
-            "/api/teams/80",
+            "/api/team/1769",
             org.springframework.http.HttpMethod.GET,
             httpEntity,
             String::class.java
@@ -107,7 +107,7 @@ class TeamControllerE2ETest {
         val httpEntity = HttpEntity<String>(null, httpHeaders)
 
         val response: ResponseEntity<String> = restTemplate.exchange(
-            "/api/teams/99999",
+            "/api/team/99999",
             org.springframework.http.HttpMethod.GET,
             httpEntity,
             String::class.java
