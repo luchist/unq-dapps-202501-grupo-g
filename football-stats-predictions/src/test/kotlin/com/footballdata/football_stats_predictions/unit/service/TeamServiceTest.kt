@@ -194,7 +194,7 @@ class TeamServiceTest {
         val result = teamService.getTeamStatistics(teamName)
 
         // Assert
-        assert(result == expectedStats)
+        assertEquals(expectedStats, result)
         verify(footballDataScraping, times(1)).getTeamData(teamName)
     }
 
