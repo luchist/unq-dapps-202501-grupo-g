@@ -8,6 +8,7 @@ import com.footballdata.football_stats_predictions.model.Team
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
 import com.footballdata.football_stats_predictions.service.TeamService
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -58,7 +59,7 @@ class TeamServiceTest {
         val result = teamService.getTeamComposition(teamName)
 
         // Assert
-        assert(result == cachedPlayers)
+        assertEquals(result, cachedPlayers)
         verify(footballDataAPI, never()).getTeamComposition(any())
         verify(teamRepository, times(1)).findByTeamName(teamName)
     }
@@ -80,7 +81,7 @@ class TeamServiceTest {
         val result = teamService.getTeamComposition(teamName)
 
         // Assert
-        assert(result == apiPlayers)
+        assertEquals(result, apiPlayers)
         verify(teamRepository, times(1)).findByTeamName(teamName)
         verify(footballDataAPI, times(1)).getTeamComposition(teamName)
         verify(teamRepository, times(1)).save(any())
@@ -139,7 +140,7 @@ class TeamServiceTest {
         val result = teamService.getScheduledMatches(teamName)
 
         // Assert
-        assert(result == expectedMatches)
+        assertEquals(result, expectedMatches)
         verify(footballDataAPI, times(1)).getScheduledMatches(teamName)
     }
 
@@ -232,7 +233,7 @@ class TeamServiceTest {
         val result = teamService.getTeamAdvancedStatistics(teamName)
 
         // Assert
-        assert(result == expectedAdvancedStats)
+        assertEquals(result, expectedAdvancedStats)
         verify(footballDataScraping, times(1)).getTeamAdvancedStatistics(teamName)
     }
 
@@ -268,7 +269,7 @@ class TeamServiceTest {
         val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
-        assert(result == expectedProbabilities)
+        assertEquals(result, expectedProbabilities)
         verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
@@ -290,7 +291,7 @@ class TeamServiceTest {
         val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
-        assert(result == equalProbabilities)
+        assertEquals(result, equalProbabilities)
         verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
@@ -323,7 +324,7 @@ class TeamServiceTest {
                 "Rating" to "6.84 (-0.02)"
             )
         )
-        
+
         `when`(footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam))
             .thenReturn(expectedComparison)
 
@@ -331,7 +332,7 @@ class TeamServiceTest {
         val result = teamService.compareTeams(localTeam, awayTeam)
 
         // Assert
-        assert(result == expectedComparison)
+        assertEquals(result, expectedComparison)
         verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 
