@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.webservice
 
 import com.footballdata.football_stats_predictions.data.FootballDataScraping
+import com.footballdata.football_stats_predictions.model.PlayerStats
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -27,7 +28,7 @@ class PlayerController(private val footballDataScraping: FootballDataScraping) {
         ]
     )
     @GetMapping("/{playerName}")
-    fun getPlayerStats(@PathVariable playerName: String): Map<String, Double> {
+    fun getPlayerStats(@PathVariable playerName: String): PlayerStats {
         return footballDataScraping.getPlayerData(playerName)
     }
 

@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
 import io.swagger.v3.oas.annotations.Operation
@@ -121,7 +122,7 @@ class TeamController(
         ]
     )
     @GetMapping("/stats/{teamName}")
-    fun getTeamStats(@PathVariable teamName: String): Map<String, Double> {
+    fun getTeamStats(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamStatistics(teamName)
     }
 
@@ -137,7 +138,7 @@ class TeamController(
         ]
     )
     @GetMapping("/advanced/{teamName}")
-    fun getTeamAdvancedStatistics(@PathVariable teamName: String): Map<String, Double> {
+    fun getTeamAdvancedStatistics(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamAdvancedStatistics(teamName)
     }
 

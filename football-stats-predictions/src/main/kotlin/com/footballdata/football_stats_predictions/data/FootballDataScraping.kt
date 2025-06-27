@@ -1,17 +1,18 @@
 package com.footballdata.football_stats_predictions.data
 
 import com.footballdata.football_stats_predictions.model.PlayerStats
-import com.footballdata.football_stats_predictions.model.Stats
 import com.footballdata.football_stats_predictions.model.TeamStats
+import com.footballdata.football_stats_predictions.service.StatsAnalyzer
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.ExpectedConditions
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import kotlin.math.abs
-import kotlin.math.exp
 
 @Component
-class FootballDataScraping {
+class FootballDataScraping(
+    @field:Autowired var statsAnalyzer: StatsAnalyzer
+) {
 
     fun getPlayerData(playerName: String): PlayerStats {
         val driver = WebDriverUtils.createDriver()
@@ -129,33 +130,9 @@ class FootballDataScraping {
     fun comparePlayerStatsWithHistory(playerName: String, year: String): Map<String, Map<String, String>> {
         val currentStats = getPlayerData(playerName)
         val historicalStats = getPlayerHistoricalRatingsByYear(playerName, year)
-        return compareStatsWithDiff(currentStats, historicalStats, "Actual", year)
+        return statsAnalyzer.compareStatsWithDiff(currentStats, historicalStats, "Actual", year)
     }
 
-    private fun compareStatsWithDiff(
-        stats1: Stats,
-        stats2: Stats,
-        key1: String,
-        key2: String
-    ): Map<String, Map<String, String>> {
-        val allKeys = stats1.keys + stats2.keys
-
-        val map1 = mutableMapOf<String, String>()
-        val map2 = mutableMapOf<String, String>()
-
-        for (key in allKeys) {
-            val v1 = stats1[key]
-            val v2 = stats2[key]
-            val diff = v1 - v2
-            map1[key] = "$v1 (${String.format("%.2f", diff)})"
-            map2[key] = "$v2 (${String.format("%.2f", -diff)})"
-        }
-
-        return mapOf(
-            key1 to map1,
-            key2 to map2
-        )
-    }
 
     fun getTeamData(teamName: String): TeamStats {
         val driver = WebDriverUtils.createDriver()
@@ -194,87 +171,12 @@ class FootballDataScraping {
         }
     }
 
-    fun predictMatchProbabilities(
-        localTeam: String,
-        visitingTeam: String
-    ): Map<String, Double> {
-        // val footballDataScraping = FootballDataScraping()
-        val localStats = this.getTeamData(localTeam)
-        val visitingStats = this.getTeamData(visitingTeam)
-
-        val weights = getWeights(localStats)
-
-        val scoreLocal = calcScore(localStats, weights)
-        val scoreVisiting = calcScore(visitingStats, weights)
-
-        val diff = abs(scoreLocal - scoreVisiting)
-        val drawFactor = exp(-diff / 5.0) // Penaliza el empate si hay mucha diferencia
-        val scoreDraw = (scoreLocal + scoreVisiting) / 2 * drawFactor
-
-        val expLocal = exp(scoreLocal)
-        val expDraw = exp(scoreDraw)
-        val expVisiting = exp(scoreVisiting)
-        val sum = expLocal + expDraw + expVisiting
-
-        val probLocal = (expLocal / sum) * 100
-        val probDraw = (expDraw / sum) * 100
-        val probVisiting = (expVisiting / sum) * 100
-
-        return mapOf(
-            "Local Win" to String.format("%.2f", probLocal).replace(",", ".").toDouble(),
-            "Draw" to String.format("%.2f", probDraw).replace(",", ".").toDouble(),
-            "Visiting Win" to String.format("%.2f", probVisiting).replace(",", ".").toDouble()
-        )
-    }
-
-    private fun getWeights(stats: TeamStats): Map<String, Double> {
-        val weights = mutableMapOf<String, Double>()
-        for (key in stats.keys) {
-            val value = when (key) {
-                "Goles" -> 0.23
-                "Tiros pp" -> 0.15
-                "Posesion%" -> 0.15
-                "AciertoPase%" -> 0.15
-                "Aéreos" -> 0.10
-                "Rating" -> 0.15
-                "Yellow Cards" -> -0.02
-                "Red Cards" -> -0.05
-                else -> 0.0
-            }
-            weights[key] = value
-        }
-        return weights
-    }
-
-    private fun calcScore(stats: TeamStats, weights: Map<String, Double>): Double {
-        var score = 0.0
-        for ((key, weight) in weights) {
-            val value = stats[key]
-            score += value * weight
-        }
-        return score
-    }
-
     fun getTeamAdvancedStatistics(teamName: String): TeamStats {
         val stats = getTeamData(teamName)
-        val advancedStats = getTeamGoalsAndShotEffectiveness(stats)
+        val advancedStats = statsAnalyzer.getTeamGoalsAndShotEffectiveness(stats)
         val results = getTeamWinsDrawsLosses(teamName)
 
         return stats + advancedStats + results
-    }
-
-    private fun getTeamGoalsAndShotEffectiveness(stats: TeamStats): TeamStats {
-        val goals = stats["Goles"]
-        val apps = stats["Apps"].takeIf{ it != 0.0 } ?: 1.0 // Evita división por cero
-        val tirosPP = stats["Tiros pp"]
-
-        val goalsAGame = goals / apps
-        val efectividadDeTiros = if (goalsAGame != 0.0) tirosPP / goalsAGame else 0.0
-
-        return TeamStats(mapOf(
-            "Goles por Partido" to goalsAGame,
-            "Efectividad de Tiros" to efectividadDeTiros
-        ))
     }
 
     private fun getTeamWinsDrawsLosses(teamName: String): TeamStats {
@@ -319,7 +221,7 @@ class FootballDataScraping {
     ): Map<String, Map<String, String>> {
         val stats1 = getTeamData(team1)
         val stats2 = getTeamData(team2)
-        return compareStatsWithDiff(stats1, stats2, team1, team2)
+        return statsAnalyzer.compareStatsWithDiff(stats1, stats2, team1, team2)
     }
 
 }

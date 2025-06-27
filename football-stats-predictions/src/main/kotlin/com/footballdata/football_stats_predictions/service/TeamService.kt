@@ -5,6 +5,7 @@ import com.footballdata.football_stats_predictions.data.FootballDataScraping
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.Player
 import com.footballdata.football_stats_predictions.model.TeamBuilder
+import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,7 +16,8 @@ class TeamService(
     @field:Autowired var footballDataAPI: FootballDataAPI,
     @field:Autowired var footballDataScraping: FootballDataScraping,
     @field:Autowired var playerRepository: PlayerRepository,
-    @field:Autowired var teamRepository: TeamRepository
+    @field:Autowired var teamRepository: TeamRepository,
+    @field:Autowired var statsAnalyzer: StatsAnalyzer
 ) {
 
     fun getTeamComposition(teamName: String): List<Player> {
@@ -55,16 +57,16 @@ class TeamService(
         return footballDataAPI.getScheduledMatches(teamName)
     }
 
-    fun getTeamStatistics(teamName: String): Map<String, Double> {
+    fun getTeamStatistics(teamName: String): TeamStats {
         return footballDataScraping.getTeamData(teamName)
     }
 
-    fun getTeamAdvancedStatistics(teamName: String): Map<String, Double> {
+    fun getTeamAdvancedStatistics(teamName: String): TeamStats {
         return footballDataScraping.getTeamAdvancedStatistics(teamName)
     }
 
     fun predictMatchProbabilities(localTeam: String, awayTeam: String): Map<String, Double> {
-        return footballDataScraping.predictMatchProbabilities(localTeam, awayTeam)
+        return statsAnalyzer.predictMatchProbabilities(localTeam, awayTeam)
     }
 
     fun compareTeams(
