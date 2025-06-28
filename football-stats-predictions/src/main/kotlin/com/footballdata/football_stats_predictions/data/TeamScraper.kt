@@ -50,6 +50,15 @@ class TeamScraper(
         }
     }
 
+    fun compareTeamStatsWithDiff(
+        team1: String,
+        team2: String
+    ): Map<String, Map<String, String>> {
+        val stats1 = getTeamData(team1)
+        val stats2 = getTeamData(team2)
+        return statsAnalyzer.compareStatsWithDiff(stats1, stats2, team1, team2)
+    }
+
     fun getTeamAdvancedStatistics(teamName: String): TeamStats {
         val stats = getTeamData(teamName)
         val advancedStats = statsAnalyzer.getTeamGoalsAndShotEffectiveness(stats)
@@ -64,14 +73,14 @@ class TeamScraper(
             WebDriverUtils.navigateAndAcceptCookies(driver, teamName)
             val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Encuentros")
 
-            // Esperar a que aparezca el wrapper de fixtures
+            // Wait for the fixtures wrapper to appear
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("team-fixture-wrapper")))
 
-            // Buscar todos los <a> con clase que contiene "box"
+            // Find all classed <a> containing "box"
             val fixtureWrapper = driver.findElement(By.id("team-fixture-wrapper"))
             val resultBoxes = fixtureWrapper.findElements(By.cssSelector("a[class^=' box ']"))
 
-            // Contar cada tipo
+            // Count each type
             var wins = 0.0
             var draws = 0.0
             var losses = 0.0
@@ -85,22 +94,12 @@ class TeamScraper(
             }
 
             TeamStats(mapOf(
-                "Ganados" to wins,
-                "Empatados" to draws,
-                "Perdidos" to losses
+                "Wins" to wins,
+                "Draws" to draws,
+                "Losses" to losses
             ))
         } finally {
             driver.quit()
         }
     }
-
-    fun compareTeamStatsWithDiff(
-        team1: String,
-        team2: String
-    ): Map<String, Map<String, String>> {
-        val stats1 = getTeamData(team1)
-        val stats2 = getTeamData(team2)
-        return statsAnalyzer.compareStatsWithDiff(stats1, stats2, team1, team2)
-    }
-
 }

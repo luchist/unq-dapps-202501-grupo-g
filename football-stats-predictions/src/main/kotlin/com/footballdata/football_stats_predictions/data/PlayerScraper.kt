@@ -18,15 +18,15 @@ class PlayerScraper(
         return try {
             WebDriverUtils.navigateAndAcceptCookies(driver, playerName)
 
-            // Busca el body de la tabla de estadística
+            // Find the body of the statistical table
             val tableBody = driver.findElement(By.id("player-table-statistics-body"))
             val tableHeader = driver.findElement(By.id("player-table-statistics-head"))
 
-            // Busca la ultima fila de la tabla de estadísticas
+            // Find the last row of the statistics table
             val totalRow = (tableBody.findElements(By.tagName("tr"))).last()
             val namesRow = (tableHeader.findElements(By.tagName("tr"))).first()
 
-            // Mapea los nombres de las columnas con los valores de la última fila usando totalRow y namesRow
+            // Map column names to last row values using totalRow and namesRow
             val cells = totalRow.findElements(By.tagName("td"))
             val namesCells = namesRow.findElements(By.tagName("th"))
             val stats = mutableMapOf<String, Double>()
@@ -63,33 +63,39 @@ class PlayerScraper(
         }
     }
 
+    fun comparePlayerStatsWithHistory(playerName: String, year: String): Map<String, Map<String, String>> {
+        val currentStats = getPlayerData(playerName)
+        val historicalStats = getPlayerHistoricalRatingsByYear(playerName, year)
+        return statsAnalyzer.compareStatsWithDiff(currentStats, historicalStats, "Current", year)
+    }
+
     private fun getPlayerHistoricalRatingsByYear(playerName: String, year: String): PlayerStats {
         val driver = WebDriverUtils.createDriver()
         return try {
             WebDriverUtils.navigateAndAcceptCookies(driver, playerName)
             val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Historial")
 
-            // Esperar a que aparezca la tabla de estadísticas históricas
+            // Wait for the historical statistics table to appear
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary")))
 
             val statsDiv = driver.findElement(By.id("statistics-table-summary"))
 
-            // Obtener las cabeceras de la tabla (nombres de columnas)
+            // Get table headers (column names)
             val headerRow = statsDiv.findElement(By.tagName("thead")).findElement(By.tagName("tr"))
             val headers = headerRow.findElements(By.tagName("th")).map { it.text.trim() }
 
-            // Encontrar índices importantes
+            // Find important indices
             val jgdosIndex = headers.indexOfFirst { it.contains("Jgdos") }.takeIf { it >= 0 } ?: 1
             val tppIndex = headers.indexOfFirst { it.contains("TpP") }.takeIf { it >= 0 } ?: headers.size
 
-            // Encontrar filas del año específico
+            // Find rows of the specific year
             val rows = statsDiv.findElement(By.tagName("tbody")).findElements(By.tagName("tr"))
             val targetRows = rows.filter { row ->
                 val cells = row.findElements(By.tagName("td"))
                 cells.isNotEmpty() && cells[0].text.trim() == year
             }
 
-            // Para columnas con promedios, necesitamos contar contribuciones
+            // For columns with averages, we need to count contributions
             val combinedStats = mutableMapOf<String, Double>()
             val contributionCounts = mutableMapOf<String, Int>()
 
@@ -101,7 +107,7 @@ class PlayerScraper(
                     val valueText = cells[i].text.trim()
                     val value = valueText.toDoubleOrNull() ?: 0.0
 
-                    // Solo contar contribuciones válidas
+                    // Only count valid contributions
                     if (valueText.isNotEmpty() && valueText != "-") {
                         if (i >= tppIndex) {
                             contributionCounts[header] = (contributionCounts[header] ?: 0) + 1
@@ -112,7 +118,7 @@ class PlayerScraper(
                 }
             }
 
-            // Convertir sumas a promedios para columnas desde TpP en adelante
+            // Convert sums to averages for columns from TpP onwards
             for (i in tppIndex until headers.size) {
                 val header = headers[i]
                 if (header in combinedStats && (contributionCounts[header] ?: 0) > 0) {
@@ -125,12 +131,4 @@ class PlayerScraper(
             driver.quit()
         }
     }
-
-    fun comparePlayerStatsWithHistory(playerName: String, year: String): Map<String, Map<String, String>> {
-        val currentStats = getPlayerData(playerName)
-        val historicalStats = getPlayerHistoricalRatingsByYear(playerName, year)
-        return statsAnalyzer.compareStatsWithDiff(currentStats, historicalStats, "Actual", year)
-    }
-
-
 }
