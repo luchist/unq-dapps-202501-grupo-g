@@ -1,16 +1,18 @@
 package com.footballdata.football_stats_predictions.service
 
-import com.footballdata.football_stats_predictions.data.FootballDataScraping
+import com.footballdata.football_stats_predictions.data.TeamScraper
 import com.footballdata.football_stats_predictions.model.Stats
 import com.footballdata.football_stats_predictions.model.TeamStats
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.roundToInt
 
 @Service
+@Transactional
 class StatsAnalyzer(
-    private val footballDataScraping: FootballDataScraping
+    private val teamScraper: TeamScraper
 ) {
 
     fun compareStatsWithDiff(
@@ -53,8 +55,8 @@ class StatsAnalyzer(
     }
 
     fun predictMatchProbabilities(localTeam: String, visitingTeam: String): Map<String, Double> {
-        val localStats = footballDataScraping.getTeamData(localTeam)
-        val visitingStats = footballDataScraping.getTeamData(visitingTeam)
+        val localStats = teamScraper.getTeamData(localTeam)
+        val visitingStats = teamScraper.getTeamData(visitingTeam)
 
         val weights = getWeights(localStats)
 

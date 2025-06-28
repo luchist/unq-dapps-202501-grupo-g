@@ -1,7 +1,7 @@
 package com.footballdata.football_stats_predictions.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
-import com.footballdata.football_stats_predictions.data.FootballDataScraping
+import com.footballdata.football_stats_predictions.data.TeamScraper
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.Player
 import com.footballdata.football_stats_predictions.model.TeamBuilder
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 @Service
 class TeamService(
     @field:Autowired var footballDataAPI: FootballDataAPI,
-    @field:Autowired var footballDataScraping: FootballDataScraping,
+    @field:Autowired var teamScraper: TeamScraper,
     @field:Autowired var playerRepository: PlayerRepository,
     @field:Autowired var teamRepository: TeamRepository,
     @field:Autowired var statsAnalyzer: StatsAnalyzer
@@ -58,11 +58,11 @@ class TeamService(
     }
 
     fun getTeamStatistics(teamName: String): TeamStats {
-        return footballDataScraping.getTeamData(teamName)
+        return teamScraper.getTeamData(teamName)
     }
 
     fun getTeamAdvancedStatistics(teamName: String): TeamStats {
-        return footballDataScraping.getTeamAdvancedStatistics(teamName)
+        return teamScraper.getTeamAdvancedStatistics(teamName)
     }
 
     fun predictMatchProbabilities(localTeam: String, awayTeam: String): Map<String, Double> {
@@ -73,6 +73,6 @@ class TeamService(
         localTeam: String,
         awayTeam: String
     ): Map<String, Map<String, String>> {
-        return footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam)
+        return teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 }

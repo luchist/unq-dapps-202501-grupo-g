@@ -1,11 +1,13 @@
 package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
+import com.footballdata.football_stats_predictions.data.TeamScraper
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import com.footballdata.football_stats_predictions.model.Team
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
+import com.footballdata.football_stats_predictions.service.StatsAnalyzer
 import com.footballdata.football_stats_predictions.service.TeamService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -26,16 +28,22 @@ class TeamServiceTest {
     private lateinit var footballDataAPI: FootballDataAPI
 
     @Mock
+    private lateinit var teamScraper: TeamScraper
+
+    @Mock
     private lateinit var playerRepository: PlayerRepository
 
     @Mock
     private lateinit var teamRepository: TeamRepository
 
+    @Mock
+    private lateinit var statsAnalyzer: StatsAnalyzer
+
     private lateinit var teamService: TeamService
 
     @BeforeEach
     fun setup() {
-        teamService = TeamService(footballDataAPI, playerRepository, teamRepository)
+        teamService = TeamService(footballDataAPI, teamScraper, playerRepository, teamRepository, statsAnalyzer)
     }
 
     @Test
