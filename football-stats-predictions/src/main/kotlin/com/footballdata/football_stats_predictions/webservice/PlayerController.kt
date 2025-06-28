@@ -1,6 +1,5 @@
 package com.footballdata.football_stats_predictions.webservice
 
-import com.footballdata.football_stats_predictions.data.FootballDataScraping
 import com.footballdata.football_stats_predictions.service.PlayerService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -15,9 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/player")
 @Tag(name = "Player", description = "Player endpoints for retrieving player statistics")
-class PlayerController(
-    private val footballDataScraping: FootballDataScraping,
-    private val playerService: PlayerService
+class PlayerController(private val playerService: PlayerService
 ) {
     @Operation(
         summary = "Player endpoint",

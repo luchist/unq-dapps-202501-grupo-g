@@ -1,12 +1,13 @@
 package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
-import com.footballdata.football_stats_predictions.data.FootballDataScraping
+import com.footballdata.football_stats_predictions.data.TeamScraper
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import com.footballdata.football_stats_predictions.model.Team
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
+import com.footballdata.football_stats_predictions.service.StatsAnalyzer
 import com.footballdata.football_stats_predictions.service.TeamService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -28,7 +29,7 @@ class TeamServiceTest {
     private lateinit var footballDataAPI: FootballDataAPI
 
     @Mock
-    private lateinit var footballDataScraping: FootballDataScraping
+    private lateinit var teamScraper: TeamScraper
 
     @Mock
     private lateinit var playerRepository: PlayerRepository
@@ -36,11 +37,14 @@ class TeamServiceTest {
     @Mock
     private lateinit var teamRepository: TeamRepository
 
+    @Mock
+    private lateinit var statsAnalyzer: StatsAnalyzer
+
     private lateinit var teamService: TeamService
 
     @BeforeEach
     fun setup() {
-        teamService = TeamService(footballDataAPI, footballDataScraping, playerRepository, teamRepository)
+        teamService = TeamService(footballDataAPI, teamScraper, playerRepository, teamRepository, statsAnalyzer)
     }
 
     @Test
@@ -189,14 +193,14 @@ class TeamServiceTest {
             "Rating" to 6.62
         )
 
-        `when`(footballDataScraping.getTeamData(teamName)).thenReturn(expectedStats)
+        `when`(teamScraper.getTeamData(teamName)).thenReturn(expectedStats)
 
         // Act
         val result = teamService.getTeamStatistics(teamName)
 
         // Assert
         assertEquals(expectedStats, result)
-        verify(footballDataScraping, times(1)).getTeamData(teamName)
+        verify(teamScraper, times(1)).getTeamData(teamName)
     }
 
     @Test
@@ -205,14 +209,14 @@ class TeamServiceTest {
         val teamName = "UnknownTeam"
         val emptyStats = emptyMap<String, Double>()
 
-        `when`(footballDataScraping.getTeamData(teamName)).thenReturn(emptyStats)
+        `when`(teamScraper.getTeamData(teamName)).thenReturn(emptyStats)
 
         // Act
         val result = teamService.getTeamStatistics(teamName)
 
         // Assert
         assert(result.isEmpty())
-        verify(footballDataScraping, times(1)).getTeamData(teamName)
+        verify(teamScraper, times(1)).getTeamData(teamName)
     }
 
     @Test
@@ -227,28 +231,28 @@ class TeamServiceTest {
             "Perdidos" to 13.0
         )
 
-        `when`(footballDataScraping.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
+        `when`(teamScraper.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
 
         // Act
         val result = teamService.getTeamAdvancedStatistics(teamName)
 
         // Assert
         assertEquals(expectedAdvancedStats, result)
-        verify(footballDataScraping, times(1)).getTeamAdvancedStatistics(teamName)
+        verify(teamScraper, times(1)).getTeamAdvancedStatistics(teamName)
     }
 
     @Test
     fun `should propagate exception when scraping fails for advanced statistics`() {
         // Arrange
         val teamName = "Barcelona"
-        `when`(footballDataScraping.getTeamAdvancedStatistics(teamName))
+        `when`(teamScraper.getTeamAdvancedStatistics(teamName))
             .thenThrow(RuntimeException("Scraping Error"))
 
         // Act & Assert
         assertThrows<RuntimeException> {
             teamService.getTeamAdvancedStatistics(teamName)
         }
-        verify(footballDataScraping, times(1)).getTeamAdvancedStatistics(teamName)
+        verify(teamScraper, times(1)).getTeamAdvancedStatistics(teamName)
     }
 
     @Test
@@ -262,7 +266,7 @@ class TeamServiceTest {
             "Visiting Win" to 26.3
         )
 
-        `when`(footballDataScraping.predictMatchProbabilities(localTeam, awayTeam))
+        `when`(teamScraper.predictMatchProbabilities(localTeam, awayTeam))
             .thenReturn(expectedProbabilities)
 
         // Act
@@ -270,7 +274,7 @@ class TeamServiceTest {
 
         // Assert
         assertEquals(expectedProbabilities, result)
-        verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+        verify(teamScraper, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
     @Test
@@ -284,7 +288,7 @@ class TeamServiceTest {
             "Visiting Win" to 33.3
         )
 
-        `when`(footballDataScraping.predictMatchProbabilities(localTeam, awayTeam))
+        `when`(teamScraper.predictMatchProbabilities(localTeam, awayTeam))
             .thenReturn(expectedEqualProbabilities)
 
         // Act
@@ -292,7 +296,7 @@ class TeamServiceTest {
 
         // Assert
         assertEquals(expectedEqualProbabilities, result)
-        verify(footballDataScraping, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+        verify(teamScraper, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
     @Test
@@ -325,7 +329,7 @@ class TeamServiceTest {
             )
         )
 
-        `when`(footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam))
+        `when`(teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam))
             .thenReturn(expectedComparison)
 
         // Act
@@ -333,7 +337,7 @@ class TeamServiceTest {
 
         // Assert
         assertEquals(expectedComparison, result)
-        verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
+        verify(teamScraper, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 
     @Test
@@ -343,7 +347,7 @@ class TeamServiceTest {
         val awayTeam = "UnknownTeam2"
         val emptyComparison = emptyMap<String, Map<String, String>>()
 
-        `when`(footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam))
+        `when`(teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam))
             .thenReturn(emptyComparison)
 
         // Act
@@ -351,7 +355,7 @@ class TeamServiceTest {
 
         // Assert
         assert(result.isEmpty())
-        verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
+        verify(teamScraper, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 
     @Test
@@ -359,13 +363,13 @@ class TeamServiceTest {
         // Arrange
         val localTeam = "Barcelona"
         val awayTeam = "Real Madrid"
-        `when`(footballDataScraping.compareTeamStatsWithDiff(localTeam, awayTeam))
+        `when`(teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam))
             .thenThrow(RuntimeException("Comparison scraping failed"))
 
         // Act & Assert
         assertThrows<RuntimeException> {
             teamService.compareTeams(localTeam, awayTeam)
         }
-        verify(footballDataScraping, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
+        verify(teamScraper, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 }
