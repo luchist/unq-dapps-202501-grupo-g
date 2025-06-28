@@ -4,8 +4,10 @@ import com.footballdata.football_stats_predictions.data.FootballDataScraping
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional
 class PlayerService(
     @field:Autowired var footballDataScraping: FootballDataScraping,
     @field:Autowired var playerRepository: PlayerRepository,

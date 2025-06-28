@@ -4,10 +4,12 @@ import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 import javax.crypto.spec.SecretKeySpec
 
 @Service
+@Transactional
 class TokenService(
     @Value("\${jwt.secret}") private val secret: String = ""
 ) {
