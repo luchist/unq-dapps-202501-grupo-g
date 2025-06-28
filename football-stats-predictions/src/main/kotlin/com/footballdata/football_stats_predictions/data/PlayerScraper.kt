@@ -10,125 +10,136 @@ import org.springframework.stereotype.Component
 
 @Component
 class PlayerScraper(
-    @field:Autowired var statsAnalyzer: StatsAnalyzer
+    @field:Autowired private val statsAnalyzer: StatsAnalyzer
 ) {
-
+    /**
+     * Retrieves the statistical data for a specific player.
+     *
+     * @param playerName The name of the player to search for
+     * @return PlayerStats object containing the player's statistical data
+     */
     fun getPlayerData(playerName: String): PlayerStats {
-        val driver = WebDriverUtils.createDriver()
-        return try {
-            WebDriverUtils.navigateAndAcceptCookies(driver, playerName)
-
-            // Find the body of the statistical table
-            val tableBody = driver.findElement(By.id("player-table-statistics-body"))
-            val tableHeader = driver.findElement(By.id("player-table-statistics-head"))
-
-            // Find the last row of the statistics table
-            val totalRow = (tableBody.findElements(By.tagName("tr"))).last()
-            val namesRow = (tableHeader.findElements(By.tagName("tr"))).first()
-
-            // Map column names to last row values using totalRow and namesRow
-            val cells = totalRow.findElements(By.tagName("td"))
-            val namesCells = namesRow.findElements(By.tagName("th"))
-            val stats = mutableMapOf<String, Double>()
-            for (i in cells.indices) {
-                val header = namesCells[i].text
-                val value = cells[i].text
-                stats[header] = value.toDoubleOrNull() ?: 0.0
-            }
-            PlayerStats(stats)
-        } finally {
-            driver.quit()
+        return WebDriverUtils.withDriver(playerName) { driver ->
+            // Usar un enfoque funcional para mapear encabezados con valores
+            driver.findElement(By.id("player-table-statistics-head"))
+                .findElements(By.tagName("tr")).first()
+                .findElements(By.tagName("th"))
+                .zip(driver.findElement(By.id("player-table-statistics-body"))
+                    .findElements(By.tagName("tr")).last()
+                    .findElements(By.tagName("td")))
+                .associate { (header, cell) ->
+                    header.text to (cell.text.toDoubleOrNull() ?: 0.0)
+                }
+                .let { PlayerStats(it) }
         }
     }
 
-
+    /**
+     * Calculates the average rating of a player based on their last matches.
+     * Takes up to 10 most recent matches into consideration.
+     *
+     * @param playerName The name of the player to search for
+     * @return The average rating of the player, or 0.0 if no ratings are found
+     */
     fun getPlayerRatingsAverage(playerName: String): Double {
-        val driver = WebDriverUtils.createDriver()
-        return try {
-            WebDriverUtils.navigateAndAcceptCookies(driver, playerName)
-            val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Estadísticas del Partido")
+        return WebDriverUtils.withDriver(playerName) { driver ->
+            WebDriverUtils.clickOnSubNavigationLink(driver, "Estadísticas del Partido")
+                .until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary-matches")))
 
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary-matches")))
-            val statsDiv = driver.findElement(By.id("statistics-table-summary-matches"))
-            val tableBody = statsDiv.findElement(By.id("player-table-statistics-body"))
-            val ratingTds = tableBody.findElements(By.cssSelector("td.rating"))
-
-            val ratings = ratingTds
+            driver.findElement(By.id("statistics-table-summary-matches"))
+                .findElement(By.id("player-table-statistics-body"))
+                .findElements(By.cssSelector("td.rating"))
                 .mapNotNull { it.text.trim().toDoubleOrNull() }
                 .take(10)
-
-            if (ratings.isNotEmpty()) ratings.average() else 0.0
-        } finally {
-            driver.quit()
+                .let { ratings -> if (ratings.isNotEmpty()) ratings.average() else 0.0 }
         }
     }
 
-    fun comparePlayerStatsWithHistory(playerName: String, year: String): Map<String, Map<String, String>> {
-        val currentStats = getPlayerData(playerName)
-        val historicalStats = getPlayerHistoricalRatingsByYear(playerName, year)
-        return statsAnalyzer.compareStatsWithDiff(currentStats, historicalStats, "Current", year)
-    }
+    /**
+     * Compares a player's current statistics with their historical statistics from a specific year.
+     * Provides a comparison with differences between current and historical values.
+     *
+     * @param playerName The name of the player to search for
+     * @param year The year to compare with (e.g., "2023")
+     * @return A map containing two maps with formatted statistics and their differences
+     */
+    fun comparePlayerStatsWithHistory(playerName: String, year: String): Map<String, Map<String, String>> =
+        statsAnalyzer.compareStatsWithDiff(
+            getPlayerData(playerName),
+            getPlayerHistoricalRatingsByYear(playerName, year),
+            "Current",
+            year
+        )
 
     private fun getPlayerHistoricalRatingsByYear(playerName: String, year: String): PlayerStats {
-        val driver = WebDriverUtils.createDriver()
-        return try {
-            WebDriverUtils.navigateAndAcceptCookies(driver, playerName)
-            val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Historial")
-
-            // Wait for the historical statistics table to appear
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary")))
+        return WebDriverUtils.withDriver(playerName) { driver ->
+            WebDriverUtils.clickOnSubNavigationLink(driver, "Historial")
+                .until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary")))
 
             val statsDiv = driver.findElement(By.id("statistics-table-summary"))
 
             // Get table headers (column names)
-            val headerRow = statsDiv.findElement(By.tagName("thead")).findElement(By.tagName("tr"))
-            val headers = headerRow.findElements(By.tagName("th")).map { it.text.trim() }
+            val headers = statsDiv.findElement(By.tagName("thead"))
+                .findElement(By.tagName("tr"))
+                .findElements(By.tagName("th"))
+                .map { it.text.trim() }
 
             // Find important indices
             val jgdosIndex = headers.indexOfFirst { it.contains("Jgdos") }.takeIf { it >= 0 } ?: 1
             val tppIndex = headers.indexOfFirst { it.contains("TpP") }.takeIf { it >= 0 } ?: headers.size
 
             // Find rows of the specific year
-            val rows = statsDiv.findElement(By.tagName("tbody")).findElements(By.tagName("tr"))
-            val targetRows = rows.filter { row ->
-                val cells = row.findElements(By.tagName("td"))
-                cells.isNotEmpty() && cells[0].text.trim() == year
-            }
+            statsDiv.findElement(By.tagName("tbody"))
+                .findElements(By.tagName("tr"))
+                .filter { it.findElements(By.tagName("td")).firstOrNull()?.text?.trim() == year }
+                .fold(Pair(mapOf<String, Double>(), mapOf<String, Int>())) { (statsAcc, countsAcc), row ->
 
-            // For columns with averages, we need to count contributions
-            val combinedStats = mutableMapOf<String, Double>()
-            val contributionCounts = mutableMapOf<String, Int>()
+                    // Extract cells
+                    val cells = row.findElements(By.tagName("td"))
 
-            for (row in targetRows) {
-                val cells = row.findElements(By.tagName("td"))
+                    // Process each cell to build statistics and counts
+                    val rowData = (jgdosIndex until cells.size.coerceAtMost(headers.size))
+                        .flatMap { i ->
+                            val header = headers[i]
+                            val valueText = cells[i].text.trim()
+                            val value = valueText.toDoubleOrNull() ?: 0.0
+                            val isValidContribution = valueText.isNotEmpty() && valueText != "-" && i >= tppIndex
 
-                for (i in jgdosIndex until cells.size.coerceAtMost(headers.size)) {
-                    val header = headers[i]
-                    val valueText = cells[i].text.trim()
-                    val value = valueText.toDoubleOrNull() ?: 0.0
+                            listOf(
+                                header to value,
+                                "${header}_count" to (if (isValidContribution) 1.0 else 0.0)
+                            )
+                        }
+                        .groupBy({ it.first }, { it.second })
 
-                    // Only count valid contributions
-                    if (valueText.isNotEmpty() && valueText != "-") {
-                        if (i >= tppIndex) {
-                            contributionCounts[header] = (contributionCounts[header] ?: 0) + 1
+                    // Update accumulated statistics
+                    val newStats = statsAcc + rowData
+                        .filterKeys { !it.endsWith("_count") }
+                        .mapValues { (k, values) -> (statsAcc[k] ?: 0.0) + values.sum() }
+
+                    // Update counts
+                    val newCounts = countsAcc + rowData
+                        .filterKeys { it.endsWith("_count") }
+                        .mapValues { (k, values) ->
+                            (countsAcc[k.removeSuffix("_count")] ?: 0) + values.sum().toInt()
+                        }
+                        .mapKeys { it.key.removeSuffix("_count") }
+
+                    Pair(newStats, newCounts)
+                }
+                .let { (stats, counts) ->
+                    // Convert sums to averages where applicable
+                    stats.mapValues { (header, value) ->
+                        if (header in headers.subList(tppIndex, headers.size) &&
+                            (counts[header] ?: 0) > 0
+                        ) {
+                            value / counts[header]!!
+                        } else {
+                            value
                         }
                     }
-
-                    combinedStats[header] = (combinedStats[header] ?: 0.0) + value
                 }
-            }
-
-            // Convert sums to averages for columns from TpP onwards
-            for (i in tppIndex until headers.size) {
-                val header = headers[i]
-                if (header in combinedStats && (contributionCounts[header] ?: 0) > 0) {
-                    combinedStats[header] = combinedStats[header]!! / contributionCounts[header]!!
-                }
-            }
-
-            PlayerStats(combinedStats)
-        } finally {
-            driver.quit()
+                .let { PlayerStats(it) }
         }
     }
 }

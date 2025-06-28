@@ -10,14 +10,18 @@ import org.springframework.stereotype.Component
 
 @Component
 class TeamScraper(
-    @field:Autowired var statsAnalyzer: StatsAnalyzer
+    @field:Autowired private val statsAnalyzer: StatsAnalyzer
 ) {
 
+    /**
+     * Retrieves the basic statistical data for a specific team.
+     * Scrapes information from the team's statistics page including goals, cards, and other metrics.
+     *
+     * @param teamName The name of the team to search for
+     * @return TeamStats object containing the team's statistical data
+     */
     fun getTeamData(teamName: String): TeamStats {
-        val driver = WebDriverUtils.createDriver()
-        return try {
-            WebDriverUtils.navigateAndAcceptCookies(driver, teamName)
-
+        return WebDriverUtils.withDriver(teamName) { driver ->
             // Find the team statistics table body and header
             val tableBody = driver.findElement(By.id("top-team-stats-summary-content"))
             val tableHeader = driver.findElement(By.cssSelector("#top-team-stats-summary-grid thead"))
@@ -28,78 +32,93 @@ class TeamScraper(
 
             // Maps the names of the columns with the values of the last row using totalRow and namesRow
             // Note: the first cell contains the "Campeonato" and "Total/Promedio" headers, so we skip it
-            val cells = totalRow.findElements(By.tagName("td")).drop(1)
-            val namesCells = namesRow.findElements(By.tagName("th")).drop(1)
-            val stats = mutableMapOf<String, Double>()
-            for (i in cells.indices) {
-                val header = namesCells[i].text
-                // Special handling for yellow and red cards which are in the same column, but in different colors
-                if (header == "Disciplina") {
-                    val yellow = cells[i].findElement(By.cssSelector(".yellow-card-box")).text
-                    val red = cells[i].findElement(By.cssSelector(".red-card-box")).text
-                    stats["Yellow Cards"] = yellow.toDoubleOrNull() ?: 0.0
-                    stats["Red Cards"] = red.toDoubleOrNull() ?: 0.0
-                } else {
-                    val value = cells[i].text
-                    stats[header] = value.toDoubleOrNull() ?: 0.0
+            // Use zip to map headers with values and transform functionally
+            namesRow.findElements(By.tagName("th"))
+                .drop(1)
+                .zip(totalRow.findElements(By.tagName("td")).drop(1))
+                .flatMap { (header, cell) ->
+                    if (header.text == "Disciplina") {
+                        listOf(
+                            "Yellow Cards" to (cell.findElement(By.cssSelector(".yellow-card-box")).text.toDoubleOrNull() ?: 0.0),
+                            "Red Cards" to (cell.findElement(By.cssSelector(".red-card-box")).text.toDoubleOrNull() ?: 0.0)
+                        )
+                    } else {
+                        listOf(header.text to (cell.text.toDoubleOrNull() ?: 0.0))
+                    }
                 }
-            }
-            TeamStats(stats)
-        } finally {
-            driver.quit()
+                .toMap()
+                .let { TeamStats(it) }
         }
     }
 
+    /**
+     * Compares the statistical data between two teams and calculates the differences.
+     * Provides a formatted comparison with differences highlighted.
+     *
+     * @param team1 The name of the first team to compare
+     * @param team2 The name of the second team to compare
+     * @return A map containing two submaps, each with formatted team statistics and their differences
+     */
     fun compareTeamStatsWithDiff(
         team1: String,
         team2: String
-    ): Map<String, Map<String, String>> {
-        val stats1 = getTeamData(team1)
-        val stats2 = getTeamData(team2)
-        return statsAnalyzer.compareStatsWithDiff(stats1, stats2, team1, team2)
-    }
+    ): Map<String, Map<String, String>> =
+        statsAnalyzer.compareStatsWithDiff(
+            getTeamData(team1),
+            getTeamData(team2),
+            team1,
+            team2
+        )
 
-    fun getTeamAdvancedStatistics(teamName: String): TeamStats {
-        val stats = getTeamData(teamName)
-        val advancedStats = statsAnalyzer.getTeamGoalsAndShotEffectiveness(stats)
-        val results = getTeamWinsDrawsLosses(teamName)
+    /**
+     * Retrieves advanced statistics for a team by combining basic stats with calculated metrics.
+     * Includes match results (wins/draws/losses) and derived metrics like shot effectiveness.
+     *
+     * @param teamName The name of the team to analyze
+     * @return TeamStats object containing both basic and advanced statistical data
+     */
+    fun getTeamAdvancedStatistics(teamName: String): TeamStats =
+        getTeamData(teamName)
+            .let { stats ->
+                val advancedStats = statsAnalyzer.getTeamGoalsAndShotEffectiveness(stats)
+                val results = scrapeMatchResults(teamName)
 
-        return stats + advancedStats + results
-    }
+                TeamStats(stats.data + advancedStats.data + results.data)
+            }
 
-    private fun getTeamWinsDrawsLosses(teamName: String): TeamStats {
-        val driver = WebDriverUtils.createDriver()
-        return try {
-            WebDriverUtils.navigateAndAcceptCookies(driver, teamName)
+    private fun scrapeMatchResults(teamName: String): TeamStats {
+        return WebDriverUtils.withDriver(teamName) { driver ->
             val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Encuentros")
 
             // Wait for the fixtures wrapper to appear
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("team-fixture-wrapper")))
 
-            // Find all classed <a> containing "box"
-            val fixtureWrapper = driver.findElement(By.id("team-fixture-wrapper"))
-            val resultBoxes = fixtureWrapper.findElements(By.cssSelector("a[class^=' box ']"))
-
-            // Count each type
-            var wins = 0.0
-            var draws = 0.0
-            var losses = 0.0
-            for (box in resultBoxes) {
-                val clazz = box.getAttribute("class")
-                when {
-                    clazz!!.contains("box w") -> wins += 1.0
-                    clazz.contains("box d") -> draws += 1.0
-                    clazz.contains("box l") -> losses += 1.0
+            // Get all items of results
+            driver.findElement(By.id("team-fixture-wrapper"))
+                  .findElements(By.cssSelector("a[class^=' box ']"))
+                // Convert each item into its result type
+                .map { box ->
+                    when {
+                        box.getAttribute("class")?.contains("box w") == true -> ResultType.WIN
+                        box.getAttribute("class")?.contains("box d") == true -> ResultType.DRAW
+                        box.getAttribute("class")?.contains("box l") == true -> ResultType.LOSS
+                        else -> ResultType.OTHER
+                    }
                 }
-            }
-
-            TeamStats(mapOf(
-                "Wins" to wins,
-                "Draws" to draws,
-                "Losses" to losses
-            ))
-        } finally {
-            driver.quit()
+                // Group and count results
+                .groupingBy { it }
+                .eachCount()
+                // Convert a count map to double values
+                .let { countMap ->
+                    mapOf(
+                        "Wins" to (countMap[ResultType.WIN] ?: 0).toDouble(),
+                        "Draws" to (countMap[ResultType.DRAW] ?: 0).toDouble(),
+                        "Losses" to (countMap[ResultType.LOSS] ?: 0).toDouble()
+                    )
+                }
+                // Create the TeamStats object with the final map
+                .let { TeamStats(it) }
         }
     }
+    private enum class ResultType { WIN, DRAW, LOSS, OTHER }
 }

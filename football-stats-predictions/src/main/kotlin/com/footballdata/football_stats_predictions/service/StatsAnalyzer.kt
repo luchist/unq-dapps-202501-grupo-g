@@ -15,79 +15,90 @@ class StatsAnalyzer(
     private val teamScraper: TeamScraper
 ) {
 
+    /**
+     * Compares two sets of statistics and calculates the differences between them.
+     *
+     * @param stats1 First set of statistics to compare
+     * @param stats2 Second set of statistics to compare
+     * @param key1 Label for the first set of statistics
+     * @param key2 Label for the second set of statistics
+     * @return A map containing two submaps, each with formatted statistics and their differences
+     */
     fun compareStatsWithDiff(
         stats1: Stats,
         stats2: Stats,
         key1: String,
         key2: String
-    ): Map<String, Map<String, String>> {
-        val allKeys = stats1.keys + stats2.keys
-
-        val map1 = mutableMapOf<String, String>()
-        val map2 = mutableMapOf<String, String>()
-
-        for (key in allKeys) {
-            val v1 = stats1[key]
-            val v2 = stats2[key]
-            val diff = v1 - v2
-            map1[key] = "$v1 (${diff.formatTwoDecimals()})"
-            map2[key] = "$v2 (${(-diff).formatTwoDecimals()})"
+    ): Map<String, Map<String, String>> =
+        (stats1.keys + stats2.keys).let { allKeys ->
+            mapOf(
+                key1 to allKeys.associateWith { key ->
+                    val diff = stats1[key] - stats2[key]
+                    "${stats1[key]} (${diff.formatTwoDecimals()})"
+                },
+                key2 to allKeys.associateWith { key ->
+                    val diff = stats1[key] - stats2[key]
+                    "${stats2[key]} (${(-diff).formatTwoDecimals()})"
+                }
+            )
         }
 
-        return mapOf(
-            key1 to map1,
-            key2 to map2
-        )
-    }
+    /**
+     * Calculates advanced goal and shot effectiveness metrics for a team.
+     *
+     * @param stats The base team statistics to analyze
+     * @return TeamStats object containing derived metrics: Goals per game and Shot Effectiveness
+     */
+    fun getTeamGoalsAndShotEffectiveness(stats: TeamStats): TeamStats =
+        stats.let { teamStats ->
+            val apps = teamStats["Apps"].takeIf { it != 0.0 } ?: 1.0
+            TeamStats(mapOf(
+                "Goals per game" to (teamStats["Goles"] / apps),
+                "Shot Effectiveness" to (if (teamStats["Goles"] > 0.0) teamStats["Tiros pp"] / (teamStats["Goles"] / apps) else 0.0)
+            ))
+        }
 
-    fun getTeamGoalsAndShotEffectiveness(stats: TeamStats): TeamStats {
-        val goals = stats["Goles"]
-        val apps = stats["Apps"].takeIf{ it != 0.0 } ?: 1.0 // Evita división por cero
-        val tirosPP = stats["Tiros pp"]
+    /**
+     * Predicts the probabilities of match outcomes between two teams.
+     * Uses weighted statistical models to calculate win/draw probabilities.
+     *
+     * @param localTeam Name of the home team
+     * @param visitingTeam Name of the away team
+     * @return Map containing the probability percentages for each possible outcome (Local Win, Draw, Visiting Win)
+     */
+    fun predictMatchProbabilities(localTeam: String, visitingTeam: String): Map<String, Double> =
+        teamScraper.getTeamData(localTeam).let { localStats ->
+            teamScraper.getTeamData(visitingTeam).let { visitingStats ->
+                getWeights(localStats).let { weights ->
+                    val scoreLocal = calcScore(localStats, weights)
+                    val scoreVisiting = calcScore(visitingStats, weights)
 
-        val goalsAGame = goals / apps
-        val efectividadDeTiros = if (goalsAGame != 0.0) tirosPP / goalsAGame else 0.0
+                    // Calculate draw factor and score
+                    abs(scoreLocal - scoreVisiting).let { diff ->
+                        exp(-diff / 5.0).let { drawFactor ->
+                            (scoreLocal + scoreVisiting) / 2 * drawFactor
+                        }
+                    }.let { scoreDraw ->
+                        // Calculate probabilities using exponential model
+                        listOf(scoreLocal, scoreDraw, scoreVisiting)
+                            .map { exp(it) }
+                            .let { (expLocal, expDraw, expVisiting) ->
+                                val sum = expLocal + expDraw + expVisiting
+                                mapOf(
+                                    "Local Win" to (expLocal / sum).toPercentageRounded(),
+                                    "Draw" to (expDraw / sum).toPercentageRounded(),
+                                    "Visiting Win" to (expVisiting / sum).toPercentageRounded()
+                                )
+                            }
+                    }
+                }
+            }
+        }
 
-        return TeamStats(mapOf(
-            "Goles por Partido" to goalsAGame,
-            "Efectividad de Tiros" to efectividadDeTiros
-        ))
-    }
 
-    fun predictMatchProbabilities(localTeam: String, visitingTeam: String): Map<String, Double> {
-        val localStats = teamScraper.getTeamData(localTeam)
-        val visitingStats = teamScraper.getTeamData(visitingTeam)
-
-        val weights = getWeights(localStats)
-
-        val scoreLocal = calcScore(localStats, weights)
-        val scoreVisiting = calcScore(visitingStats, weights)
-
-        val diff = abs(scoreLocal - scoreVisiting)
-        val drawFactor = exp(-diff / 5.0)
-        val scoreDraw = (scoreLocal + scoreVisiting) / 2 * drawFactor
-
-        val expLocal = exp(scoreLocal)
-        val expDraw = exp(scoreDraw)
-        val expVisiting = exp(scoreVisiting)
-        val sum = expLocal + expDraw + expVisiting
-
-        // Calculate probabilities
-        val probLocal = (expLocal / sum).toPercentageRounded()
-        val probDraw = (expDraw / sum).toPercentageRounded()
-        val probVisiting = (expVisiting / sum).toPercentageRounded()
-
-        return mapOf(
-            "Local Win" to probLocal,
-            "Draw" to probDraw,
-            "Visiting Win" to probVisiting
-        )
-    }
-
-    private fun getWeights(stats: TeamStats): Map<String, Double> {
-        val weights = mutableMapOf<String, Double>()
-        for (key in stats.keys) {
-            val value = when (key) {
+    private fun getWeights(stats: TeamStats): Map<String, Double> =
+        stats.keys.associateWith { key ->
+            when (key) {
                 "Goles" -> 0.23
                 "Tiros pp" -> 0.15
                 "Posesion%" -> 0.15
@@ -98,19 +109,12 @@ class StatsAnalyzer(
                 "Red Cards" -> -0.05
                 else -> 0.0
             }
-            weights[key] = value
         }
-        return weights
-    }
 
-    private fun calcScore(stats: TeamStats, weights: Map<String, Double>): Double {
-        var score = 0.0
-        for ((key, weight) in weights) {
-            val value = stats[key]
-            score += value * weight
+    private fun calcScore(stats: TeamStats, weights: Map<String, Double>): Double =
+        weights.entries.fold(0.0) { score, (key, weight) ->
+            score + stats[key] * weight
         }
-        return score
-    }
 
     private fun Double.toPercentageRounded(): Double =
         (this * 10000).roundToInt() / 100.0

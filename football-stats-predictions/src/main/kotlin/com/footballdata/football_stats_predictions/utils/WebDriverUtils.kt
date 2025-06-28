@@ -39,4 +39,32 @@ object WebDriverUtils {
         link.click()
         return wait
     }
+
+    /**
+     * Extensión que permite usar WebDriver con la función 'use'
+     */
+    inline fun <T> WebDriver.use(block: (WebDriver) -> T): T {
+        try {
+            return block(this)
+        } finally {
+            this.quit()
+        }
+    }
+
+    /**
+     * Ejecuta operaciones con un WebDriver que se cierra automáticamente al finalizar.
+     * Implementa el patrón resource-try-with-resources usando la función 'use' de Kotlin.
+     * Navega a la URL especificada y acepta las cookies automáticamente.
+     *
+     * @param url URL o término de búsqueda para navegar
+     * @param block Función lambda que contiene las operaciones a realizar con el WebDriver
+     * @return El resultado de tipo T producido por la función lambda
+     */
+    inline fun <T> withDriver(url: String, block: (WebDriver) -> T): T {
+        val driver = createDriver()
+        return driver.use {
+            navigateAndAcceptCookies(it, url)
+            block(it)
+        }
+    }
 }
