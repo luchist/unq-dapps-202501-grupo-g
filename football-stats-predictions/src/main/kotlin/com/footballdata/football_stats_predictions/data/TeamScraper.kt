@@ -1,7 +1,7 @@
 package com.footballdata.football_stats_predictions.data
 
 import com.footballdata.football_stats_predictions.model.TeamStats
-import com.footballdata.football_stats_predictions.service.StatsAnalyzer
+import com.footballdata.football_stats_predictions.service.StatsAnalyzerService
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class TeamScraper(
-    @field:Autowired private val statsAnalyzer: StatsAnalyzer
+    @field:Autowired private val statsAnalyzerService: StatsAnalyzerService
 ) {
 
     /**
@@ -39,8 +39,10 @@ class TeamScraper(
                 .flatMap { (header, cell) ->
                     if (header.text == "Disciplina") {
                         listOf(
-                            "Yellow Cards" to (cell.findElement(By.cssSelector(".yellow-card-box")).text.toDoubleOrNull() ?: 0.0),
-                            "Red Cards" to (cell.findElement(By.cssSelector(".red-card-box")).text.toDoubleOrNull() ?: 0.0)
+                            "Yellow Cards" to (cell.findElement(By.cssSelector(".yellow-card-box")).text.toDoubleOrNull()
+                                ?: 0.0),
+                            "Red Cards" to (cell.findElement(By.cssSelector(".red-card-box")).text.toDoubleOrNull()
+                                ?: 0.0)
                         )
                     } else {
                         listOf(header.text to (cell.text.toDoubleOrNull() ?: 0.0))
@@ -63,7 +65,7 @@ class TeamScraper(
         team1: String,
         team2: String
     ): Map<String, Map<String, String>> =
-        statsAnalyzer.compareStatsWithDiff(
+        statsAnalyzerService.compareStatsWithDiff(
             getTeamData(team1),
             getTeamData(team2),
             team1,
@@ -83,7 +85,7 @@ class TeamScraper(
         team1: String,
         team2: String
     ): Map<String, Double> =
-        statsAnalyzer.predictMatch(
+        statsAnalyzerService.predictMatch(
             getTeamData(team1),
             getTeamData(team2)
         )
@@ -98,7 +100,7 @@ class TeamScraper(
     fun getTeamAdvancedStatistics(teamName: String): TeamStats =
         getTeamData(teamName)
             .let { stats ->
-                val advancedStats = statsAnalyzer.getTeamGoalsAndShotEffectiveness(stats)
+                val advancedStats = statsAnalyzerService.getTeamGoalsAndShotEffectiveness(stats)
                 val results = scrapeMatchResults(teamName)
 
                 TeamStats(stats.data + advancedStats.data + results.data)
@@ -113,7 +115,7 @@ class TeamScraper(
 
             // Get all items of results
             driver.findElement(By.id("team-fixture-wrapper"))
-                  .findElements(By.cssSelector("a[class^=' box ']"))
+                .findElements(By.cssSelector("a[class^=' box ']"))
                 // Convert each item into its result type
                 .map { box ->
                     when {
@@ -138,5 +140,6 @@ class TeamScraper(
                 .let { TeamStats(it) }
         }
     }
+
     private enum class ResultType { WIN, DRAW, LOSS, OTHER }
 }

@@ -10,7 +10,7 @@ import kotlin.math.roundToInt
 
 @Service
 @Transactional
-class StatsAnalyzer() {
+class StatsAnalyzerService() {
 
     /**
      * Compares two sets of statistics and calculates the differences between them.
@@ -49,10 +49,12 @@ class StatsAnalyzer() {
     fun getTeamGoalsAndShotEffectiveness(stats: TeamStats): TeamStats =
         stats.let { teamStats ->
             val apps = teamStats["Apps"].takeIf { it != 0.0 } ?: 1.0
-            TeamStats(mapOf(
-                "Goals per game" to (teamStats["Goles"] / apps),
-                "Shot Effectiveness" to (if (teamStats["Goles"] > 0.0) teamStats["Tiros pp"] / (teamStats["Goles"] / apps) else 0.0)
-            ))
+            TeamStats(
+                mapOf(
+                    "Goals per game" to (teamStats["Goles"] / apps),
+                    "Shot Effectiveness" to (if (teamStats["Goles"] > 0.0) teamStats["Tiros pp"] / (teamStats["Goles"] / apps) else 0.0)
+                )
+            )
         }
 
     /**

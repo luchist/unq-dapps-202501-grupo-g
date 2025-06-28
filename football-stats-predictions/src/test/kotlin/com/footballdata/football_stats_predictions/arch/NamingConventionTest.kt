@@ -4,12 +4,12 @@ import com.tngtech.archunit.junit.AnalyzeClasses
 import com.tngtech.archunit.junit.ArchTest
 import com.tngtech.archunit.lang.ArchRule
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
-import org.springframework.stereotype.Controller
 import org.springframework.stereotype.Service
+import org.springframework.web.bind.annotation.RestController
 
 
 @AnalyzeClasses(packages = ["com.footballdata.football_stats_predictions"])
-object NamingConventionTest {
+class NamingConventionTest {
     @ArchTest
     var services_should_be_prefixed: ArchRule? = classes()
         .that().resideInAPackage("..service..")
@@ -24,7 +24,7 @@ object NamingConventionTest {
     @ArchTest
     var controllers_should_be_suffixed: ArchRule? = classes()
         .that().resideInAPackage("..webservice..")
-        .and().areAnnotatedWith(Controller::class.java)
+        .and().areAnnotatedWith(RestController::class.java)
         .should().haveSimpleNameEndingWith("Controller")
 
     @ArchTest
