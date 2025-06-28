@@ -33,11 +33,6 @@ class ArchitectureLayerTest {
         classes().that().resideInAPackage("..service..")
             .should().onlyBeAccessed().byAnyPackage("..webservice..", "..service..", "..config..", "..integration..")
 
-//    @ArchTest
-//    val services_should_only_access_persistence_or_other_services: ArchRule? =
-//        classes().that().resideInAPackage("..service..")
-//            .should().onlyAccessClassesThat().resideInAnyPackage("..service..", "..repositories..", "java..")
-
 
     // 'dependOn' catches a wider variety of violations, e.g. having fields of type, having method parameters of type, extending type ...
     @ArchTest
@@ -53,10 +48,4 @@ class ArchitectureLayerTest {
         classes().that().resideInAPackage("..service..")
             .should().onlyHaveDependentClassesThat()
             .resideInAnyPackage("..webservice..", "..service..", "..config..", "..integration..")
-
-//    @ArchTest
-//    val services_should_only_depend_on_persistence_or_other_services: ArchRule? =
-//        classes().that().resideInAPackage("..service..")
-//            .should().onlyDependOnClassesThat()
-//            .resideInAnyPackage("..service..", "..repositories..", "java..", "javax..")
 }
