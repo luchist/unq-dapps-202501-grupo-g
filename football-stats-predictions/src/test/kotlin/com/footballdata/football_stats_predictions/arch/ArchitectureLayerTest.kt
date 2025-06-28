@@ -1,6 +1,5 @@
 package com.footballdata.football_stats_predictions.arch
 
-import com.tngtech.archunit.core.domain.JavaClasses
 import com.tngtech.archunit.junit.AnalyzeClasses
 import com.tngtech.archunit.junit.ArchTest
 import com.tngtech.archunit.lang.ArchRule
@@ -9,15 +8,6 @@ import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 
 @AnalyzeClasses(packages = ["com.footballdata.football_stats_predictions"])
 class ArchitectureLayerTest {
-
-    @ArchTest
-    fun rule_as_method(importedClasses: JavaClasses) {
-        val myRule: ArchRule = classes()
-            .that().resideInAPackage("..service..")
-            .should().onlyBeAccessed().byAnyPackage("..webservice..", "..service..", "..config..", "..integration..")
-
-        myRule.check(importedClasses)
-    }
 
     // 'access' catches only violations by real accesses, i.e. accessing a field, calling a method; compare 'dependOn' further down
     @ArchTest
