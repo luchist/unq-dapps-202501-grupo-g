@@ -8,7 +8,6 @@ import com.footballdata.football_stats_predictions.model.Team
 import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
-import com.footballdata.football_stats_predictions.service.StatsAnalyzer
 import com.footballdata.football_stats_predictions.service.TeamService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -38,14 +37,11 @@ class TeamServiceTest {
     @Mock
     private lateinit var teamRepository: TeamRepository
 
-    @Mock
-    private lateinit var statsAnalyzer: StatsAnalyzer
-
     private lateinit var teamService: TeamService
 
     @BeforeEach
     fun setup() {
-        teamService = TeamService(footballDataAPI, teamScraper, playerRepository, teamRepository, statsAnalyzer)
+        teamService = TeamService(footballDataAPI, teamScraper, playerRepository, teamRepository)
     }
 
     @Test
@@ -269,7 +265,7 @@ class TeamServiceTest {
             "Visiting Win" to 26.3
         )
 
-        `when`(statsAnalyzer.predictMatchProbabilities(localTeam, awayTeam))
+        `when`(teamScraper.predictMatchProbabilities(localTeam, awayTeam))
             .thenReturn(expectedProbabilities)
 
         // Act
@@ -277,7 +273,7 @@ class TeamServiceTest {
 
         // Assert
         assertEquals(expectedProbabilities, result)
-        verify(statsAnalyzer, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+        verify(teamScraper, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
     @Test
@@ -291,7 +287,7 @@ class TeamServiceTest {
             "Visiting Win" to 33.3
         )
 
-        `when`(statsAnalyzer.predictMatchProbabilities(localTeam, awayTeam))
+        `when`(teamScraper.predictMatchProbabilities(localTeam, awayTeam))
             .thenReturn(expectedEqualProbabilities)
 
         // Act
@@ -299,7 +295,7 @@ class TeamServiceTest {
 
         // Assert
         assertEquals(expectedEqualProbabilities, result)
-        verify(statsAnalyzer, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+        verify(teamScraper, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
     @Test

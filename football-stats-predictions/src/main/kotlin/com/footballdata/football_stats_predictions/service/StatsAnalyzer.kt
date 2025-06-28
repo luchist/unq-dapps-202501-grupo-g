@@ -1,6 +1,5 @@
 package com.footballdata.football_stats_predictions.service
 
-import com.footballdata.football_stats_predictions.data.TeamScraper
 import com.footballdata.football_stats_predictions.model.Stats
 import com.footballdata.football_stats_predictions.model.TeamStats
 import org.springframework.stereotype.Service
@@ -11,9 +10,7 @@ import kotlin.math.roundToInt
 
 @Service
 @Transactional
-class StatsAnalyzer(
-    private val teamScraper: TeamScraper
-) {
+class StatsAnalyzer() {
 
     /**
      * Compares two sets of statistics and calculates the differences between them.
@@ -62,36 +59,32 @@ class StatsAnalyzer(
      * Predicts the probabilities of match outcomes between two teams.
      * Uses weighted statistical models to calculate win/draw probabilities.
      *
-     * @param localTeam Name of the home team
-     * @param visitingTeam Name of the away team
+     * @param localStats Statistics of the home team
+     * @param visitingStats Statistics of the away team
      * @return Map containing the probability percentages for each possible outcome (Local Win, Draw, Visiting Win)
      */
-    fun predictMatchProbabilities(localTeam: String, visitingTeam: String): Map<String, Double> =
-        teamScraper.getTeamData(localTeam).let { localStats ->
-            teamScraper.getTeamData(visitingTeam).let { visitingStats ->
-                getWeights(localStats).let { weights ->
-                    val scoreLocal = calcScore(localStats, weights)
-                    val scoreVisiting = calcScore(visitingStats, weights)
+    fun predictMatch(localStats: TeamStats, visitingStats: TeamStats): Map<String, Double> =
+        getWeights(localStats).let { weights ->
+            val scoreLocal = calcScore(localStats, weights)
+            val scoreVisiting = calcScore(visitingStats, weights)
 
-                    // Calculate draw factor and score
-                    abs(scoreLocal - scoreVisiting).let { diff ->
-                        exp(-diff / 5.0).let { drawFactor ->
-                            (scoreLocal + scoreVisiting) / 2 * drawFactor
-                        }
-                    }.let { scoreDraw ->
-                        // Calculate probabilities using exponential model
-                        listOf(scoreLocal, scoreDraw, scoreVisiting)
-                            .map { exp(it) }
-                            .let { (expLocal, expDraw, expVisiting) ->
-                                val sum = expLocal + expDraw + expVisiting
-                                mapOf(
-                                    "Local Win" to (expLocal / sum).toPercentageRounded(),
-                                    "Draw" to (expDraw / sum).toPercentageRounded(),
-                                    "Visiting Win" to (expVisiting / sum).toPercentageRounded()
-                                )
-                            }
-                    }
+            // Calculate draw factor and score
+            abs(scoreLocal - scoreVisiting).let { diff ->
+                exp(-diff / 5.0).let { drawFactor ->
+                    (scoreLocal + scoreVisiting) / 2 * drawFactor
                 }
+            }.let { scoreDraw ->
+                // Calculate probabilities using exponential model
+                listOf(scoreLocal, scoreDraw, scoreVisiting)
+                    .map { exp(it) }
+                    .let { (expLocal, expDraw, expVisiting) ->
+                        val sum = expLocal + expDraw + expVisiting
+                        mapOf(
+                            "Local Win" to (expLocal / sum).toPercentageRounded(),
+                            "Draw" to (expDraw / sum).toPercentageRounded(),
+                            "Visiting Win" to (expVisiting / sum).toPercentageRounded()
+                        )
+                    }
             }
         }
 

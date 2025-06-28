@@ -17,11 +17,9 @@ class TeamService(
     @field:Autowired var teamScraper: TeamScraper,
     @field:Autowired var playerRepository: PlayerRepository,
     @field:Autowired var teamRepository: TeamRepository,
-    @field:Autowired var statsAnalyzer: StatsAnalyzer
 ) {
 
     fun getTeamComposition(teamName: String): List<Player> {
-
         // Check if the team exists in the database
         val cachedTeam = teamRepository.findByTeamName(teamName)
 
@@ -38,7 +36,6 @@ class TeamService(
             .withTeamName(teamName)
             .withPlayers(teamComposition.toMutableList())
             .build()
-
         teamRepository.save(team)
 
         // Save each player to the database
@@ -48,7 +45,6 @@ class TeamService(
                 playerRepository.save(player)
             }
         }
-
         // return the team composition
         return teamComposition
     }
@@ -66,13 +62,10 @@ class TeamService(
     }
 
     fun predictMatchProbabilities(localTeam: String, awayTeam: String): Map<String, Double> {
-        return statsAnalyzer.predictMatchProbabilities(localTeam, awayTeam)
+        return teamScraper.predictMatchProbabilities(localTeam, awayTeam)
     }
 
-    fun compareTeams(
-        localTeam: String,
-        awayTeam: String
-    ): Map<String, Map<String, String>> {
+    fun compareTeams(localTeam: String, awayTeam: String): Map<String, Map<String, String>> {
         return teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam)
     }
 }

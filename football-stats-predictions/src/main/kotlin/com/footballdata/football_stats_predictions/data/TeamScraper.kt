@@ -71,6 +71,24 @@ class TeamScraper(
         )
 
     /**
+     * Predicts the outcome probabilities of a match between two teams.
+     * Retrieves statistics for both teams and processes them through the analyzer
+     * to calculate probabilities for home win, draw, and away win.
+     *
+     * @param team1 Name of the home team
+     * @param team2 Name of the away team
+     * @return A map with probabilities (in percentage) for each possible outcome
+     */
+    fun predictMatchProbabilities(
+        team1: String,
+        team2: String
+    ): Map<String, Double> =
+        statsAnalyzer.predictMatch(
+            getTeamData(team1),
+            getTeamData(team2)
+        )
+
+    /**
      * Retrieves advanced statistics for a team by combining basic stats with calculated metrics.
      * Includes match results (wins/draws/losses) and derived metrics like shot effectiveness.
      *
