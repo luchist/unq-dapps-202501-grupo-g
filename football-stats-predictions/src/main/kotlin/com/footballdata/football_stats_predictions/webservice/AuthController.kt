@@ -65,10 +65,10 @@ class AuthController(
         return try {
             val newToken = authenticationService.refreshAccessToken(request.token)
             ResponseEntity.ok(TokenResponse(token = newToken))
-        } catch (ex: ExpiredJwtException) {
+        } catch (_: ExpiredJwtException) {
             ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(TokenResponse(error = "Token expired"))
-        } catch (ex: JwtException) {
+        } catch (_: JwtException) {
             ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(TokenResponse(error = "Invalid token"))
         }

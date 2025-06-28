@@ -9,4 +9,8 @@ data class PlayerStats(val data: Map<String, Double>) : Stats {
     operator fun plus(other: PlayerStats): PlayerStats {
         return PlayerStats(this.data + other.data)
     }
+
+    fun isEmpty(): Boolean {
+        return data.isEmpty()
+    }
 }

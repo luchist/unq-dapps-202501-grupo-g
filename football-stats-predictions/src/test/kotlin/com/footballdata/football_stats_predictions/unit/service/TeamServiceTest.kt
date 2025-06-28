@@ -5,6 +5,7 @@ import com.footballdata.football_stats_predictions.data.TeamScraper
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import com.footballdata.football_stats_predictions.model.Team
+import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
 import com.footballdata.football_stats_predictions.service.StatsAnalyzer
@@ -181,16 +182,18 @@ class TeamServiceTest {
     fun `should return team statistics from scraping service`() {
         // Arrange
         val teamName = "Barcelona"
-        val expectedStats = mapOf(
-            "Apps" to 25.0,
-            "Goles" to 47.0,
-            "Tiros pp" to 12.8,
-            "Yellow Cards" to 44.0,
-            "Red Cards" to 0.0,
-            "Posesion%" to 54.5,
-            "AciertoPase%" to 86.0,
-            "Aéreos" to 12.4,
-            "Rating" to 6.62
+        val expectedStats = TeamStats(
+            mapOf(
+                "Apps" to 25.0,
+                "Goles" to 47.0,
+                "Tiros pp" to 12.8,
+                "Yellow Cards" to 44.0,
+                "Red Cards" to 0.0,
+                "Posesion%" to 54.5,
+                "AciertoPase%" to 86.0,
+                "Aéreos" to 12.4,
+                "Rating" to 6.62
+            )
         )
 
         `when`(teamScraper.getTeamData(teamName)).thenReturn(expectedStats)
@@ -207,7 +210,7 @@ class TeamServiceTest {
     fun `should return empty map when no team statistics available`() {
         // Arrange
         val teamName = "UnknownTeam"
-        val emptyStats = emptyMap<String, Double>()
+        val emptyStats = TeamStats(emptyMap())
 
         `when`(teamScraper.getTeamData(teamName)).thenReturn(emptyStats)
 
@@ -223,13 +226,13 @@ class TeamServiceTest {
     fun `should return advanced team statistics from scraping service`() {
         // Arrange
         val teamName = "Real Madrid"
-        val expectedAdvancedStats = mapOf(
+        val expectedAdvancedStats = TeamStats(mapOf(
             "Goles por Partido" to 2.19,
             "Efectividad de Tiros" to 7.35,
             "Ganados" to 42.0,
             "Empatados" to 8.0,
             "Perdidos" to 13.0
-        )
+        ))
 
         `when`(teamScraper.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
 
@@ -266,7 +269,7 @@ class TeamServiceTest {
             "Visiting Win" to 26.3
         )
 
-        `when`(teamScraper.predictMatchProbabilities(localTeam, awayTeam))
+        `when`(statsAnalyzer.predictMatchProbabilities(localTeam, awayTeam))
             .thenReturn(expectedProbabilities)
 
         // Act
@@ -274,7 +277,7 @@ class TeamServiceTest {
 
         // Assert
         assertEquals(expectedProbabilities, result)
-        verify(teamScraper, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+        verify(statsAnalyzer, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
     @Test
@@ -288,7 +291,7 @@ class TeamServiceTest {
             "Visiting Win" to 33.3
         )
 
-        `when`(teamScraper.predictMatchProbabilities(localTeam, awayTeam))
+        `when`(statsAnalyzer.predictMatchProbabilities(localTeam, awayTeam))
             .thenReturn(expectedEqualProbabilities)
 
         // Act
@@ -296,7 +299,7 @@ class TeamServiceTest {
 
         // Assert
         assertEquals(expectedEqualProbabilities, result)
-        verify(teamScraper, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+        verify(statsAnalyzer, times(1)).predictMatchProbabilities(localTeam, awayTeam)
     }
 
     @Test

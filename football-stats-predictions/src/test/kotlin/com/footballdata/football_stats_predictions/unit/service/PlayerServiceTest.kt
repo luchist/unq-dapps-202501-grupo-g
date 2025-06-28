@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.unit.service
 
-import com.footballdata.football_stats_predictions.data.FootballDataScraping
+import com.footballdata.football_stats_predictions.data.PlayerScraper
+import com.footballdata.football_stats_predictions.model.PlayerStats
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.service.PlayerService
 import org.junit.jupiter.api.BeforeEach
@@ -17,7 +18,7 @@ import org.mockito.kotlin.verify
 class PlayerServiceTest {
 
     @Mock
-    private lateinit var footballDataScraping: FootballDataScraping
+    private lateinit var playerScraper: PlayerScraper
 
     @Mock
     private lateinit var playerRepository: PlayerRepository
@@ -26,14 +27,14 @@ class PlayerServiceTest {
 
     @BeforeEach
     fun setup() {
-        playerService = PlayerService(footballDataScraping, playerRepository)
+        playerService = PlayerService(playerScraper, playerRepository)
     }
 
     @Test
     fun `should return player statistics from scraping service`() {
         // Arrange
         val playerName = "Lionel Messi"
-        val expectedStats = mapOf(
+        val expectedStats = PlayerStats(mapOf(
             "goals" to 15.0,
             "assists" to 8.0,
             "shots_per_game" to 4.2,
@@ -42,46 +43,46 @@ class PlayerServiceTest {
             "minutes_played" to 2340.0,
             "key_passes" to 2.1,
             "successful_tackles" to 0.8
-        )
+        ))
 
-        `when`(footballDataScraping.getPlayerData(playerName)).thenReturn(expectedStats)
+        `when`(playerScraper.getPlayerData(playerName)).thenReturn(expectedStats)
 
         // Act
         val result = playerService.getPlayerStats(playerName)
 
         // Assert
         assert(result == expectedStats)
-        verify(footballDataScraping, times(1)).getPlayerData(playerName)
+        verify(playerScraper, times(1)).getPlayerData(playerName)
     }
 
     @Test
     fun `should return empty map when no player statistics available`() {
         // Arrange
         val playerName = "Unknown Player"
-        val emptyStats = emptyMap<String, Double>()
+        val emptyStats = PlayerStats(emptyMap())
 
-        `when`(footballDataScraping.getPlayerData(playerName)).thenReturn(emptyStats)
+        `when`(playerScraper.getPlayerData(playerName)).thenReturn(emptyStats)
 
         // Act
         val result = playerService.getPlayerStats(playerName)
 
         // Assert
         assert(result.isEmpty())
-        verify(footballDataScraping, times(1)).getPlayerData(playerName)
+        verify(playerScraper, times(1)).getPlayerData(playerName)
     }
 
     @Test
     fun `should propagate exception when scraping fails for player statistics`() {
         // Arrange
         val playerName = "Problematic Player"
-        `when`(footballDataScraping.getPlayerData(playerName))
+        `when`(playerScraper.getPlayerData(playerName))
             .thenThrow(RuntimeException("Scraping Error"))
 
         // Act & Assert
         assertThrows<RuntimeException> {
             playerService.getPlayerStats(playerName)
         }
-        verify(footballDataScraping, times(1)).getPlayerData(playerName)
+        verify(playerScraper, times(1)).getPlayerData(playerName)
     }
 
     @Test
@@ -90,14 +91,14 @@ class PlayerServiceTest {
         val playerName = "Pedri"
         val expectedRating = 7.8
 
-        `when`(footballDataScraping.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
+        `when`(playerScraper.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
 
         // Act
         val result = playerService.getPlayerRatingsAverage(playerName)
 
         // Assert
         assert(result == expectedRating)
-        verify(footballDataScraping, times(1)).getPlayerRatingsAverage(playerName)
+        verify(playerScraper, times(1)).getPlayerRatingsAverage(playerName)
     }
 
     @Test
@@ -106,14 +107,14 @@ class PlayerServiceTest {
         val playerName = "New Player"
         val expectedRating = 0.0
 
-        `when`(footballDataScraping.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
+        `when`(playerScraper.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
 
         // Act
         val result = playerService.getPlayerRatingsAverage(playerName)
 
         // Assert
         assert(result == expectedRating)
-        verify(footballDataScraping, times(1)).getPlayerRatingsAverage(playerName)
+        verify(playerScraper, times(1)).getPlayerRatingsAverage(playerName)
     }
 
     @Test
@@ -122,14 +123,14 @@ class PlayerServiceTest {
         val playerName = "Cristiano Ronaldo"
         val expectedRating = 9.2
 
-        `when`(footballDataScraping.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
+        `when`(playerScraper.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
 
         // Act
         val result = playerService.getPlayerRatingsAverage(playerName)
 
         // Assert
         assert(result == expectedRating)
-        verify(footballDataScraping, times(1)).getPlayerRatingsAverage(playerName)
+        verify(playerScraper, times(1)).getPlayerRatingsAverage(playerName)
     }
 
     @Test
@@ -138,28 +139,28 @@ class PlayerServiceTest {
         val playerName = "Robert Lewandowski"
         val expectedRating = 8.45
 
-        `when`(footballDataScraping.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
+        `when`(playerScraper.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
 
         // Act
         val result = playerService.getPlayerRatingsAverage(playerName)
 
         // Assert
         assert(result == expectedRating)
-        verify(footballDataScraping, times(1)).getPlayerRatingsAverage(playerName)
+        verify(playerScraper, times(1)).getPlayerRatingsAverage(playerName)
     }
 
     @Test
     fun `should propagate exception when scraping fails for player ratings`() {
         // Arrange
         val playerName = "Error Player"
-        `when`(footballDataScraping.getPlayerRatingsAverage(playerName))
+        `when`(playerScraper.getPlayerRatingsAverage(playerName))
             .thenThrow(RuntimeException("Rating scraping failed"))
 
         // Act & Assert
         assertThrows<RuntimeException> {
             playerService.getPlayerRatingsAverage(playerName)
         }
-        verify(footballDataScraping, times(1)).getPlayerRatingsAverage(playerName)
+        verify(playerScraper, times(1)).getPlayerRatingsAverage(playerName)
     }
 
     @Test
@@ -190,7 +191,7 @@ class PlayerServiceTest {
             )
         )
 
-        `when`(footballDataScraping.comparePlayerStatsWithHistory(playerName, year))
+        `when`(playerScraper.comparePlayerStatsWithHistory(playerName, year))
             .thenReturn(expectedComparison)
 
         // Act
@@ -198,7 +199,7 @@ class PlayerServiceTest {
 
         // Assert
         assert(result == expectedComparison)
-        verify(footballDataScraping, times(1)).comparePlayerStatsWithHistory(playerName, year)
+        verify(playerScraper, times(1)).comparePlayerStatsWithHistory(playerName, year)
     }
 
     @Test
@@ -208,7 +209,7 @@ class PlayerServiceTest {
         val year = "2023"
         val emptyComparison = emptyMap<String, Map<String, String>>()
 
-        `when`(footballDataScraping.comparePlayerStatsWithHistory(playerName, year))
+        `when`(playerScraper.comparePlayerStatsWithHistory(playerName, year))
             .thenReturn(emptyComparison)
 
         // Act
@@ -216,7 +217,7 @@ class PlayerServiceTest {
 
         // Assert
         assert(result.isEmpty())
-        verify(footballDataScraping, times(1)).comparePlayerStatsWithHistory(playerName, year)
+        verify(playerScraper, times(1)).comparePlayerStatsWithHistory(playerName, year)
     }
 
     @Test
@@ -237,7 +238,7 @@ class PlayerServiceTest {
             )
         )
 
-        `when`(footballDataScraping.comparePlayerStatsWithHistory(playerName, year))
+        `when`(playerScraper.comparePlayerStatsWithHistory(playerName, year))
             .thenReturn(identicalComparison)
 
         // Act
@@ -245,7 +246,7 @@ class PlayerServiceTest {
 
         // Assert
         assert(result == identicalComparison)
-        verify(footballDataScraping, times(1)).comparePlayerStatsWithHistory(playerName, year)
+        verify(playerScraper, times(1)).comparePlayerStatsWithHistory(playerName, year)
     }
 
     @Test
@@ -266,7 +267,7 @@ class PlayerServiceTest {
             )
         )
 
-        `when`(footballDataScraping.comparePlayerStatsWithHistory(playerName, year))
+        `when`(playerScraper.comparePlayerStatsWithHistory(playerName, year))
             .thenReturn(expectedComparison)
 
         // Act
@@ -274,7 +275,7 @@ class PlayerServiceTest {
 
         // Assert
         assert(result == expectedComparison)
-        verify(footballDataScraping, times(1)).comparePlayerStatsWithHistory(playerName, year)
+        verify(playerScraper, times(1)).comparePlayerStatsWithHistory(playerName, year)
     }
 
     @Test
@@ -295,7 +296,7 @@ class PlayerServiceTest {
             )
         )
 
-        `when`(footballDataScraping.comparePlayerStatsWithHistory(playerName, year))
+        `when`(playerScraper.comparePlayerStatsWithHistory(playerName, year))
             .thenReturn(declineComparison)
 
         // Act
@@ -303,7 +304,7 @@ class PlayerServiceTest {
 
         // Assert
         assert(result == declineComparison)
-        verify(footballDataScraping, times(1)).comparePlayerStatsWithHistory(playerName, year)
+        verify(playerScraper, times(1)).comparePlayerStatsWithHistory(playerName, year)
     }
 
     @Test
@@ -311,13 +312,13 @@ class PlayerServiceTest {
         // Arrange
         val playerName = "Error Player"
         val year = "2023"
-        `when`(footballDataScraping.comparePlayerStatsWithHistory(playerName, year))
+        `when`(playerScraper.comparePlayerStatsWithHistory(playerName, year))
             .thenThrow(RuntimeException("History comparison scraping failed"))
 
         // Act & Assert
         assertThrows<RuntimeException> {
             playerService.comparePlayerHistory(playerName, year)
         }
-        verify(footballDataScraping, times(1)).comparePlayerStatsWithHistory(playerName, year)
+        verify(playerScraper, times(1)).comparePlayerStatsWithHistory(playerName, year)
     }
 }

@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.model.PlayerStats
 import com.footballdata.football_stats_predictions.service.PlayerService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -28,8 +29,10 @@ class PlayerController(private val playerService: PlayerService
         ]
     )
     @GetMapping("/{playerName}")
-    fun getPlayerStats(@PathVariable playerName: String): Map<String, Double> {
-        return playerService.getPlayerStats(playerName);
+    fun getPlayerStats(
+        @PathVariable playerName: String
+    ): PlayerStats {
+        return playerService.getPlayerStats(playerName)
     }
 
     @GetMapping("/{playerName}/rating")
