@@ -41,18 +41,26 @@ class StatsAnalyzerService() {
         }
 
     /**
-     * Calculates advanced goal and shot effectiveness metrics for a team.
+     * Calculates advanced goal and shot effectiveness metrics for a team using functional approach.
+     * Performs calculations immutably and rounds results to two decimal places.
      *
      * @param stats The base team statistics to analyze
-     * @return TeamStats object containing derived metrics: Goals per game and Shot Effectiveness
+     * @return TeamStats object containing derived metrics: Goals per game and Shot Effectiveness (rounded to two decimals)
      */
     fun getTeamGoalsAndShotEffectiveness(stats: TeamStats): TeamStats =
-        stats.let { teamStats ->
-            val apps = teamStats["Apps"].takeIf { it != 0.0 } ?: 1.0
+        stats.run {
+            val goalsPerGame = (this["Goles"] / (this["Apps"].takeIf { it != 0.0 } ?: 1.0))
+                .toRounded()
+
+            val shotEffectiveness = (if (this["Goles"] > 0.0)
+                this["Tiros pp"] / goalsPerGame
+            else 0.0)
+                .toRounded()
+
             TeamStats(
                 mapOf(
-                    "Goals per game" to (teamStats["Goles"] / apps),
-                    "Shot Effectiveness" to (if (teamStats["Goles"] > 0.0) teamStats["Tiros pp"] / (teamStats["Goles"] / apps) else 0.0)
+                    "Goals per game" to goalsPerGame,
+                    "Shot Effectiveness" to shotEffectiveness
                 )
             )
         }
@@ -72,8 +80,10 @@ class StatsAnalyzerService() {
 
             // Calculate draw factor and score
             abs(scoreLocal - scoreVisiting).let { diff ->
-                exp(-diff / 5.0).let { drawFactor ->
-                    (scoreLocal + scoreVisiting) / 2 * drawFactor
+                exp(-diff / 3.0).let { drawFactor ->
+                    // Multiplicador adicional para aumentar la probabilidad de empate
+                    val drawMultiplier = 1.2
+                    (scoreLocal + scoreVisiting) / 2 * drawFactor * drawMultiplier
                 }
             }.let { scoreDraw ->
                 // Calculate probabilities using exponential model
@@ -102,6 +112,12 @@ class StatsAnalyzerService() {
                 "Rating" -> 0.15
                 "Yellow Cards" -> -0.02
                 "Red Cards" -> -0.05
+                // Advanced statistics added
+                "Goals per game" -> 0.25
+                "Shot Effectiveness" -> -0.15  // Negative because smaller is better
+                "Wins" -> 0.20
+                "Draws" -> 0.10
+                "Losses" -> -0.20
                 else -> 0.0
             }
         }
@@ -117,4 +133,6 @@ class StatsAnalyzerService() {
     private fun Double.formatTwoDecimals(): String =
         String.format("%.2f", this)
 
+    private fun Double.toRounded(): Double =
+        (this * 100).roundToInt() / 100.0
 }

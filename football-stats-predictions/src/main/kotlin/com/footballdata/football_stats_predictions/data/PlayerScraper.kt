@@ -7,7 +7,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import kotlin.ranges.until
+import kotlin.math.roundToInt
 
 @Component
 class PlayerScraper(
@@ -21,14 +21,16 @@ class PlayerScraper(
      */
     fun getPlayerData(playerName: String): PlayerStats {
         return WebDriverUtils.withSearchAndAcceptCookies(playerName) { driver ->
-            // Usar un enfoque funcional para mapear encabezados con valores
+            // Use a functional approach to map headers with values
             driver.findElement(By.id("player-table-statistics-head"))
                 .findElements(By.tagName("tr")).first()
                 .findElements(By.tagName("th"))
+                .drop(1)
                 .zip(
                     driver.findElement(By.id("player-table-statistics-body"))
                         .findElements(By.tagName("tr")).last()
                         .findElements(By.tagName("td"))
+                        .drop(1)
                 )
                 .associate { (header, cell) ->
                     header.text to (cell.text.toDoubleOrNull() ?: 0.0)
@@ -53,7 +55,11 @@ class PlayerScraper(
                 .findElements(By.cssSelector("td.rating"))
                 .mapNotNull { it.text.trim().toDoubleOrNull() }
                 .take(10)
-                .let { ratings -> if (ratings.isNotEmpty()) ratings.average() else 0.0 }
+                .let { ratings ->
+                    if (ratings.isNotEmpty())
+                        (ratings.average() * 100).roundToInt() / 100.0
+                    else 0.0
+                }
         }
     }
 
@@ -134,7 +140,7 @@ class PlayerScraper(
                         if (header in headers.subList(tppIndex, headers.size) &&
                             (counts[header] ?: 0) > 0
                         ) {
-                            value / counts[header]!!
+                            ((value / counts[header]!!) * 100).roundToInt() / 100.0
                         } else {
                             value
                         }

@@ -86,8 +86,8 @@ class TeamScraper(
         team2: String
     ): Map<String, Double> =
         statsAnalyzerService.predictMatch(
-            getTeamData(team1),
-            getTeamData(team2)
+            getTeamAdvancedStatistics(team1),
+            getTeamAdvancedStatistics(team2)
         )
 
     /**
