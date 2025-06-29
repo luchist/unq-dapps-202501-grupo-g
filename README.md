@@ -7,6 +7,22 @@
 - [SonarCloud](https://sonarcloud.io/project/overview?id=luchist_unq-dapps-202501-grupo-g)
 - [Render](https://unq-dapps-202501-grupo-g.onrender.com)
 
+## Entrega Nro. 3
+
+**Core**
+
+- Crear un test de arquitectura ✅
+- Auditoria de Web-Services
+  Loguear <timestamp,user,operación/metodo, parámetros, tiempoDeEjecicion> de los servicios publicados con Spring
+  utilizando Log4j/logback
+- Configurar https://www.baeldung.com/spring-boot-prometheus (Metricas)
+- Configurar https://www.baeldung.com/spring-boot-actuators (Endpoints de Monitoreo)
+
+**Funcionalidad**
+
+- Endpoint de métricas avanzadas ✅
+- Endpoint de comparación de equipos ✅
+
 ## Entrega Nro. 2
 
 **Core**
@@ -22,8 +38,8 @@
 
 - Endpoint de próximos partidos de un equipo ✅
 - Endpoint de historial de consultas ✅
-- Endpoint de rendimiento de jugador
-- Endpoint de predicción de partido
+- Endpoint de rendimiento de jugador ✅
+- Endpoint de predicción de partido ✅
 
 ## Entrega Nro. 1
 

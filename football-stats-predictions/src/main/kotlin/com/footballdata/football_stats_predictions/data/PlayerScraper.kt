@@ -1,7 +1,7 @@
 package com.footballdata.football_stats_predictions.data
 
 import com.footballdata.football_stats_predictions.model.PlayerStats
-import com.footballdata.football_stats_predictions.service.StatsAnalyzer
+import com.footballdata.football_stats_predictions.service.StatsAnalyzerService
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -11,7 +11,7 @@ import kotlin.ranges.until
 
 @Component
 class PlayerScraper(
-    @field:Autowired private val statsAnalyzer: StatsAnalyzer
+    @field:Autowired private val statsAnalyzerService: StatsAnalyzerService
 ) {
     /**
      * Retrieves the statistical data for a specific player.
@@ -25,9 +25,11 @@ class PlayerScraper(
             driver.findElement(By.id("player-table-statistics-head"))
                 .findElements(By.tagName("tr")).first()
                 .findElements(By.tagName("th"))
-                .zip(driver.findElement(By.id("player-table-statistics-body"))
-                    .findElements(By.tagName("tr")).last()
-                    .findElements(By.tagName("td")))
+                .zip(
+                    driver.findElement(By.id("player-table-statistics-body"))
+                        .findElements(By.tagName("tr")).last()
+                        .findElements(By.tagName("td"))
+                )
                 .associate { (header, cell) ->
                     header.text to (cell.text.toDoubleOrNull() ?: 0.0)
                 }
@@ -64,7 +66,7 @@ class PlayerScraper(
      * @return A map containing two maps with formatted statistics and their differences
      */
     fun comparePlayerStatsWithHistory(playerName: String, year: String): Map<String, Map<String, String>> =
-        statsAnalyzer.compareStatsWithDiff(
+        statsAnalyzerService.compareStatsWithDiff(
             getPlayerData(playerName),
             getPlayerHistoricalRatingsByYear(playerName, year),
             "Current",

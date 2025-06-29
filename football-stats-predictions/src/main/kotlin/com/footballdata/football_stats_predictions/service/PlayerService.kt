@@ -5,8 +5,10 @@ import com.footballdata.football_stats_predictions.model.PlayerStats
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional
 class PlayerService(
     @field:Autowired var playerScraper: PlayerScraper,
     @field:Autowired var playerRepository: PlayerRepository,
