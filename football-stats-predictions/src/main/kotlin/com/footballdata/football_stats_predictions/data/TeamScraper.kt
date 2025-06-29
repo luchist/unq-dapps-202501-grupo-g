@@ -21,7 +21,7 @@ class TeamScraper(
      * @return TeamStats object containing the team's statistical data
      */
     fun getTeamData(teamName: String): TeamStats {
-        return WebDriverUtils.withDriver(teamName) { driver ->
+        return WebDriverUtils.withSearchAndAcceptCookies(teamName) { driver ->
             // Find the team statistics table body and header
             val tableBody = driver.findElement(By.id("top-team-stats-summary-content"))
             val tableHeader = driver.findElement(By.cssSelector("#top-team-stats-summary-grid thead"))
@@ -105,12 +105,9 @@ class TeamScraper(
             }
 
     private fun scrapeMatchResults(teamName: String): TeamStats {
-        return WebDriverUtils.withDriver(teamName) { driver ->
-            val wait = WebDriverUtils.clickOnSubNavigationLink(driver, "Encuentros")
-
-            // Wait for the fixtures wrapper to appear
+        return WebDriverUtils.withSearchAndSubNavigation(teamName, "Encuentros") { driver, wait ->
+        // Wait for the fixtures wrapper to appear
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("team-fixture-wrapper")))
-
             // Get all items of results
             driver.findElement(By.id("team-fixture-wrapper"))
                   .findElements(By.cssSelector("a[class^=' box ']"))

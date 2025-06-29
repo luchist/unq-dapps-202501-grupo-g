@@ -7,6 +7,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import kotlin.ranges.until
 
 @Component
 class PlayerScraper(
@@ -19,7 +20,7 @@ class PlayerScraper(
      * @return PlayerStats object containing the player's statistical data
      */
     fun getPlayerData(playerName: String): PlayerStats {
-        return WebDriverUtils.withDriver(playerName) { driver ->
+        return WebDriverUtils.withSearchAndAcceptCookies(playerName) { driver ->
             // Usar un enfoque funcional para mapear encabezados con valores
             driver.findElement(By.id("player-table-statistics-head"))
                 .findElements(By.tagName("tr")).first()
@@ -42,9 +43,8 @@ class PlayerScraper(
      * @return The average rating of the player, or 0.0 if no ratings are found
      */
     fun getPlayerRatingsAverage(playerName: String): Double {
-        return WebDriverUtils.withDriver(playerName) { driver ->
-            WebDriverUtils.clickOnSubNavigationLink(driver, "Estadísticas del Partido")
-                .until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary-matches")))
+        return WebDriverUtils.withSearchAndSubNavigation(playerName, "Estadísticas del Partido") { driver, wait ->
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary-matches")))
 
             driver.findElement(By.id("statistics-table-summary-matches"))
                 .findElement(By.id("player-table-statistics-body"))
@@ -72,9 +72,8 @@ class PlayerScraper(
         )
 
     private fun getPlayerHistoricalRatingsByYear(playerName: String, year: String): PlayerStats {
-        return WebDriverUtils.withDriver(playerName) { driver ->
-            WebDriverUtils.clickOnSubNavigationLink(driver, "Historial")
-                .until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary")))
+        return WebDriverUtils.withSearchAndSubNavigation(playerName, "Historial") { driver, wait ->
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary")))
 
             val statsDiv = driver.findElement(By.id("statistics-table-summary"))
 
