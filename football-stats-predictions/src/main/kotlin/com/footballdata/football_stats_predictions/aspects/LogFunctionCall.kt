@@ -25,13 +25,13 @@ public class LogFunctionCallAspect(private val defaultLogLevel: String = "INFO")
         val annotation = method.getAnnotation(LogFunctionCall::class.java)
         val logLevel = annotation?.logLevel ?: defaultLogLevel
 
-        // Log the method name and arguments if any
+        // Logs method name and arguments if any
         val message =
             if (joinPoint.args.isEmpty()) {
                 "Function called: \'${joinPoint.signature.name}\' with no arguments"
             } else {
                 "Function called: \'${joinPoint.signature.name}\'" +
-                        "with arguments: ${joinPoint.args.joinToString(", ")}"
+                        " with arguments: ${joinPoint.args.joinToString(", ")}"
             }
 
         //Log level

@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
 import com.footballdata.football_stats_predictions.model.PlayerStats
 import com.footballdata.football_stats_predictions.service.PlayerService
 import io.swagger.v3.oas.annotations.Operation
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/player")
 @Tag(name = "Player", description = "Player endpoints for retrieving player statistics")
-class PlayerController(private val playerService: PlayerService
+class PlayerController(
+    private val playerService: PlayerService
 ) {
     @Operation(
         summary = "Player endpoint",
@@ -29,6 +31,7 @@ class PlayerController(private val playerService: PlayerService
         ]
     )
     @GetMapping("/{playerName}")
+    @LogFunctionCall
     fun getPlayerStats(
         @PathVariable playerName: String
     ): PlayerStats {
@@ -36,6 +39,7 @@ class PlayerController(private val playerService: PlayerService
     }
 
     @GetMapping("/{playerName}/rating")
+    @LogFunctionCall
     fun getPlayerRatingsAverage(
         @PathVariable playerName: String
     ): Double {
@@ -43,6 +47,7 @@ class PlayerController(private val playerService: PlayerService
     }
 
     @GetMapping("/{playerName}/compare/{year}")
+    @LogFunctionCall
     fun comparePlayerHistory(
         @PathVariable playerName: String,
         @PathVariable year: String
