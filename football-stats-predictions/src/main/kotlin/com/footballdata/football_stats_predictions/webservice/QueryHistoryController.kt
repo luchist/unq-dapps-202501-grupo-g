@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
 import com.footballdata.football_stats_predictions.model.QueryHistory
 import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import io.swagger.v3.oas.annotations.Operation
@@ -25,6 +26,7 @@ class QueryHistoryController(@Autowired private val queryHistoryService: QueryHi
         ]
     )
     @GetMapping
+    @LogFunctionCall
     fun getUserQueryHistory(authentication: Authentication): List<QueryHistory> {
         val userName = authentication.name
         return queryHistoryService.getUserQueryHistory(userName)

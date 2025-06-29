@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
 import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
@@ -31,6 +32,7 @@ class TeamController(
         ]
     )
     @GetMapping("/{teamName}")
+    @LogFunctionCall
     fun getTeamComposition(
         @Parameter(
             description = "The team name that needs to be fetched",
@@ -76,6 +78,7 @@ class TeamController(
         ]
     )
     @GetMapping("/{teamName}/matches")
+    @LogFunctionCall
     fun getScheduledMatches(
         @Parameter(
             description = "The team name for which scheduled matches are needed",
@@ -122,6 +125,7 @@ class TeamController(
         ]
     )
     @GetMapping("/stats/{teamName}")
+    @LogFunctionCall
     fun getTeamStats(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamStatistics(teamName)
     }
@@ -138,6 +142,7 @@ class TeamController(
         ]
     )
     @GetMapping("/advanced/{teamName}")
+    @LogFunctionCall
     fun getTeamAdvancedStatistics(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamAdvancedStatistics(teamName)
     }
@@ -151,6 +156,7 @@ class TeamController(
         ]
     )
     @GetMapping("/predict/{localTeam}/{awayTeam}")
+    @LogFunctionCall
     fun predictMatchProbabilities(
         @PathVariable localTeam: String,
         @PathVariable awayTeam: String
@@ -168,6 +174,7 @@ class TeamController(
         ]
     )
     @GetMapping("/compare/{localTeam}/{awayTeam}")
+    @LogFunctionCall
     fun compareTeams(
         @PathVariable localTeam: String,
         @PathVariable awayTeam: String

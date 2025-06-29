@@ -13,5 +13,5 @@ val logger = LoggerFactory.getLogger(FootballStatsPredictionsApplication::class.
 
 fun main(args: Array<String>) {
     runApplication<FootballStatsPredictionsApplication>(*args)
-    logger.info("Football Stats Predictions Application started successfully")
+    logger.info("Football Stats Predictions Application started successfully!")
 }

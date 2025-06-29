@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
 import com.footballdata.football_stats_predictions.dto.*
 import com.footballdata.football_stats_predictions.model.Role
 import com.footballdata.football_stats_predictions.model.User
@@ -40,6 +41,7 @@ class AuthController(
         ]
     )
     @PostMapping
+    @LogFunctionCall
     fun authenticate(
         @Valid @RequestBody authRequest: AuthenticationRequest
     ): AuthenticationResponse =
@@ -59,6 +61,7 @@ class AuthController(
         ]
     )
     @PostMapping("/refresh")
+    @LogFunctionCall
     fun refreshAccessToken(
         @Valid @RequestBody request: RefreshTokenRequest
     ): ResponseEntity<TokenResponse> {
@@ -89,6 +92,7 @@ class AuthController(
         ]
     )
     @PostMapping("/register")
+    @LogFunctionCall
     fun register(@Valid @RequestBody registerRequest: RegisterRequest): AuthenticationResponse {
         val hashedPassword = encoder.encode(registerRequest.password)
         val user = User(
