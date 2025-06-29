@@ -13,10 +13,5 @@ val logger = LoggerFactory.getLogger(FootballStatsPredictionsApplication::class.
 
 fun main(args: Array<String>) {
     runApplication<FootballStatsPredictionsApplication>(*args)
-
-    logger.debug("Debug log message");
-    logger.info("Info log message");
-    logger.error("Error log message");
-    logger.warn("Warn log message");
-    logger.trace("Trace log message");
+    logger.info("Football Stats Predictions Application started successfully")
 }
