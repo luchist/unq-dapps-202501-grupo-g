@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Logs path -->
+    <property name="LOG_HOME" value="${LOG_DIR:-./logs}"/>
+
+    <!-- Configuration for Console logs -->
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %black(%d{ISO8601}) %highlight(%-5level) [%green(%t)] %yellow(%C{1}): %msg%n%throwable
+            </Pattern>
+        </layout>
+    </appender>
+
+    <!-- Configuration for File logs -->
+    <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/football-stats-predictions.log</file>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%d %p %C{1} [%t] %m%n</Pattern>
+        </encoder>
+
+        <!-- Immediate flushes to file -->
+        <immediateFlush>true</immediateFlush>
+        <prudent>true</prudent>
+
+        <!-- Accepts WARN or superior -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+
+        <!-- Rolling policy and max file size -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/archived/football-stats-predictions-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Root log level -->
+    <root level="info">
+        <appender-ref ref="Console"/>
+        <appender-ref ref="File"/>
+    </root>
+</configuration>
