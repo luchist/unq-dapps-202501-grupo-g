@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component
 class TeamScraper(
     @field:Autowired private val statsAnalyzerService: StatsAnalyzerService
 ) {
-
     /**
      * Retrieves the basic statistical data for a specific team.
      * Scrapes information from the team's statistics page including goals, cards, and other metrics.

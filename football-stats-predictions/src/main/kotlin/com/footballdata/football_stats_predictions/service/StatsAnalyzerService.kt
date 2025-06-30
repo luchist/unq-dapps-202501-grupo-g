@@ -11,7 +11,6 @@ import kotlin.math.roundToInt
 @Service
 @Transactional
 class StatsAnalyzerService() {
-
     /**
      * Compares two sets of statistics and calculates the differences between them.
      *
@@ -100,6 +99,51 @@ class StatsAnalyzerService() {
             }
         }
 
+    fun calculateStatsAverages(
+        stats: Map<String, Double>,
+        counts: Map<String, Int>,
+        headers: List<String>,
+        startIndex: Int
+    ): Map<String, Double> {
+        return stats.mapValues { (header, value) ->
+            if (header in headers.subList(startIndex, headers.size) &&
+                (counts[header] ?: 0) > 0
+            ) {
+                ((value / counts[header]!!) * 100).roundToInt() / 100.0
+            } else {
+                value
+            }
+        }
+    }
+
+    fun processStatsData(
+        rawData: List<Pair<String, Double>>,
+        currentStats: Map<String, Double>,
+        currentCounts: Map<String, Int>
+    ): Pair<Map<String, Double>, Map<String, Int>> {
+        val rowData = rawData.groupBy({ it.first }, { it.second })
+
+        val newStats = currentStats + rowData
+            .filterKeys { !it.endsWith("_count") }
+            .mapValues { (k, values) -> (currentStats[k] ?: 0.0) + values.sum() }
+
+        val newCounts = currentCounts + rowData
+            .filterKeys { it.endsWith("_count") }
+            .mapValues { (k, values) ->
+                (currentCounts[k.removeSuffix("_count")] ?: 0) + values.sum().toInt()
+            }
+            .mapKeys { it.key.removeSuffix("_count") }
+
+        return Pair(newStats, newCounts)
+    }
+
+    fun findColumnIndices(headers: List<String>,
+                          nameStart: String,
+                          nameEnd: String): Pair<Int, Int> {
+        val startIndex = headers.indexOfFirst { it.contains(nameStart) }.takeIf { it >= 0 } ?: 1
+        val endIndex = headers.indexOfFirst { it.contains(nameEnd) }.takeIf { it >= 0 } ?: headers.size
+        return Pair(startIndex, endIndex)
+    }
 
     private fun getWeights(stats: TeamStats): Map<String, Double> =
         stats.keys.associateWith { key ->

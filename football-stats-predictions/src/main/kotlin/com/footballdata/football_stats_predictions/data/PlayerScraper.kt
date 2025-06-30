@@ -4,6 +4,7 @@ import com.footballdata.football_stats_predictions.model.PlayerStats
 import com.footballdata.football_stats_predictions.service.StatsAnalyzerService
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
+import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -85,68 +86,65 @@ class PlayerScraper(
 
             val statsDiv = driver.findElement(By.id("statistics-table-summary"))
 
-            // Get table headers (column names)
-            val headers = statsDiv.findElement(By.tagName("thead"))
-                .findElement(By.tagName("tr"))
-                .findElements(By.tagName("th"))
-                .map { it.text.trim() }
+            // Get important headings and indexes
+            val headers = extractTableHeaders(statsDiv)
+            val (jgdosIndex, tppIndex) = statsAnalyzerService.findColumnIndices(headers, "Jgdos", "TpP")
 
-            // Find important indices
-            val jgdosIndex = headers.indexOfFirst { it.contains("Jgdos") }.takeIf { it >= 0 } ?: 1
-            val tppIndex = headers.indexOfFirst { it.contains("TpP") }.takeIf { it >= 0 } ?: headers.size
+            // Procesar datos de las filas del año específico
+            val (stats, counts) = processYearData(statsDiv, year, headers, jgdosIndex, tppIndex)
 
-            // Find rows of the specific year
-            statsDiv.findElement(By.tagName("tbody"))
-                .findElements(By.tagName("tr"))
-                .filter { it.findElements(By.tagName("td")).firstOrNull()?.text?.trim() == year }
-                .fold(Pair(mapOf<String, Double>(), mapOf<String, Int>())) { (statsAcc, countsAcc), row ->
+            // Convertir sumas a promedios donde corresponda
+            val finalStats = statsAnalyzerService.calculateStatsAverages(stats, counts, headers, tppIndex)
 
-                    // Extract cells
-                    val cells = row.findElements(By.tagName("td"))
-
-                    // Process each cell to build statistics and counts
-                    val rowData = (jgdosIndex until cells.size.coerceAtMost(headers.size))
-                        .flatMap { i ->
-                            val header = headers[i]
-                            val valueText = cells[i].text.trim()
-                            val value = valueText.toDoubleOrNull() ?: 0.0
-                            val isValidContribution = valueText.isNotEmpty() && valueText != "-" && i >= tppIndex
-
-                            listOf(
-                                header to value,
-                                "${header}_count" to (if (isValidContribution) 1.0 else 0.0)
-                            )
-                        }
-                        .groupBy({ it.first }, { it.second })
-
-                    // Update accumulated statistics
-                    val newStats = statsAcc + rowData
-                        .filterKeys { !it.endsWith("_count") }
-                        .mapValues { (k, values) -> (statsAcc[k] ?: 0.0) + values.sum() }
-
-                    // Update counts
-                    val newCounts = countsAcc + rowData
-                        .filterKeys { it.endsWith("_count") }
-                        .mapValues { (k, values) ->
-                            (countsAcc[k.removeSuffix("_count")] ?: 0) + values.sum().toInt()
-                        }
-                        .mapKeys { it.key.removeSuffix("_count") }
-
-                    Pair(newStats, newCounts)
-                }
-                .let { (stats, counts) ->
-                    // Convert sums to averages where applicable
-                    stats.mapValues { (header, value) ->
-                        if (header in headers.subList(tppIndex, headers.size) &&
-                            (counts[header] ?: 0) > 0
-                        ) {
-                            ((value / counts[header]!!) * 100).roundToInt() / 100.0
-                        } else {
-                            value
-                        }
-                    }
-                }
-                .let { PlayerStats(it) }
+            PlayerStats(finalStats)
         }
+    }
+
+    private fun extractTableHeaders(statsDiv: WebElement): List<String> {
+        return statsDiv.findElement(By.tagName("thead"))
+            .findElement(By.tagName("tr"))
+            .findElements(By.tagName("th"))
+            .map { it.text.trim() }
+    }
+
+    private fun processYearData(
+        statsDiv: WebElement,
+        year: String,
+        headers: List<String>,
+        jgdosIndex: Int,
+        tppIndex: Int
+    ): Pair<Map<String, Double>, Map<String, Int>> {
+        return statsDiv.findElement(By.tagName("tbody"))
+            .findElements(By.tagName("tr"))
+            .filter { it.findElements(By.tagName("td")).firstOrNull()?.text?.trim() == year }
+            .fold(Pair(mapOf(), mapOf())) { (statsAcc, countsAcc), row ->
+                processRowData(row, headers, jgdosIndex, tppIndex, statsAcc, countsAcc)
+            }
+    }
+
+    private fun processRowData(
+        row: WebElement,
+        headers: List<String>,
+        jgdosIndex: Int,
+        tppIndex: Int,
+        statsAcc: Map<String, Double>,
+        countsAcc: Map<String, Int>
+    ): Pair<Map<String, Double>, Map<String, Int>> {
+        val cells = row.findElements(By.tagName("td"))
+
+        val rowData = (jgdosIndex until cells.size.coerceAtMost(headers.size))
+            .flatMap { i ->
+                val header = headers[i]
+                val valueText = cells[i].text.trim()
+                val value = valueText.toDoubleOrNull() ?: 0.0
+                val isValidContribution = valueText.isNotEmpty() && valueText != "-" && i >= tppIndex
+
+                listOf(
+                    header to value,
+                    "${header}_count" to (if (isValidContribution) 1.0 else 0.0)
+                )
+            }
+
+        return statsAnalyzerService.processStatsData(rowData, statsAcc, countsAcc)
     }
 }
