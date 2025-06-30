@@ -18,7 +18,7 @@ public class LogFunctionCallAspect(private val defaultLogLevel: String = "INFO")
 
     @Around("@annotation(LogFunctionCall)")
     @Throws(Throwable::class)
-    fun logExecutionTime(joinPoint: ProceedingJoinPoint): Any? {
+    fun logFunctionCall(joinPoint: ProceedingJoinPoint): Any? {
         // Get the method signature and annotation details
         val signature = joinPoint.signature as MethodSignature
         val method = signature.method
