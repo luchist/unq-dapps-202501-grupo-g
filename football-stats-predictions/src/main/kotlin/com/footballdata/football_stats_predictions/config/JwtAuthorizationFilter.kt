@@ -48,6 +48,7 @@ class JwtAuthorizationFilter(
                     }
                 }
             } catch (ex: Exception) {
+                logger.error("Error while requesting JWT token", ex)
                 response.writer.write(
                     """{"error": "Filter Authorization error: 
                     |${ex.message ?: "unknown error"}"}""".trimMargin()

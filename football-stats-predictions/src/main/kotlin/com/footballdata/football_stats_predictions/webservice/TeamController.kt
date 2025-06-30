@@ -1,5 +1,7 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
+import com.footballdata.football_stats_predictions.logger
 import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
@@ -31,6 +33,7 @@ class TeamController(
         ]
     )
     @GetMapping("/{teamName}")
+    @LogFunctionCall
     fun getTeamComposition(
         @Parameter(
             description = "The team name that needs to be fetched",
@@ -51,6 +54,20 @@ class TeamController(
             }
             ResponseEntity.ok(players)
         } catch (e: Exception) {
+            //sanitize the error message
+            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
+                "An error occurred while fetching team composition."
+            } else {
+                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
+            }
+
+            //sanitize team name to securely log user-controlled data
+            val sanitizedTeamName = if (teamName.isBlank()) {
+                "Unknown Team"
+            } else {
+                teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
+            }
+            logger.error("Error fetching team composition for $sanitizedTeamName: $sanitizedMessage")
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
@@ -76,6 +93,7 @@ class TeamController(
         ]
     )
     @GetMapping("/{teamName}/matches")
+    @LogFunctionCall
     fun getScheduledMatches(
         @Parameter(
             description = "The team name for which scheduled matches are needed",
@@ -96,6 +114,20 @@ class TeamController(
             }
             ResponseEntity.ok(matches)
         } catch (e: Exception) {
+            //sanitize the error message
+            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
+                "An error occurred while fetching team composition."
+            } else {
+                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
+            }
+
+            //sanitize team name to securely log user-controlled data
+            val sanitizedTeamName = if (teamName.isBlank()) {
+                "Unknown Team"
+            } else {
+                teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
+            }
+            logger.error("Error fetching scheduled Matches for $sanitizedTeamName: $sanitizedMessage")
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
@@ -122,6 +154,7 @@ class TeamController(
         ]
     )
     @GetMapping("/stats/{teamName}")
+    @LogFunctionCall
     fun getTeamStats(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamStatistics(teamName)
     }
@@ -138,6 +171,7 @@ class TeamController(
         ]
     )
     @GetMapping("/advanced/{teamName}")
+    @LogFunctionCall
     fun getTeamAdvancedStatistics(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamAdvancedStatistics(teamName)
     }
@@ -151,6 +185,7 @@ class TeamController(
         ]
     )
     @GetMapping("/predict/{localTeam}/{awayTeam}")
+    @LogFunctionCall
     fun predictMatchProbabilities(
         @PathVariable localTeam: String,
         @PathVariable awayTeam: String
@@ -168,6 +203,7 @@ class TeamController(
         ]
     )
     @GetMapping("/compare/{localTeam}/{awayTeam}")
+    @LogFunctionCall
     fun compareTeams(
         @PathVariable localTeam: String,
         @PathVariable awayTeam: String

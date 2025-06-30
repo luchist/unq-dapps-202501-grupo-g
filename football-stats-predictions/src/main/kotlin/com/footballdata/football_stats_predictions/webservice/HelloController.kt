@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.webservice
 
+import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -24,6 +25,7 @@ class HelloController {
         ]
     )
     @GetMapping("/hello")
+    @LogFunctionCall
     fun hello(): ResponseEntity<String> {
         return ResponseEntity.ok("Hello, Authorized User!")
     }
