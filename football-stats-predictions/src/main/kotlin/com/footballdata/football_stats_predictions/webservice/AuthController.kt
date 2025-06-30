@@ -2,6 +2,7 @@ package com.footballdata.football_stats_predictions.webservice
 
 import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
 import com.footballdata.football_stats_predictions.dto.*
+import com.footballdata.football_stats_predictions.logger
 import com.footballdata.football_stats_predictions.model.Role
 import com.footballdata.football_stats_predictions.model.User
 import com.footballdata.football_stats_predictions.repositories.UserRepository
@@ -69,9 +70,11 @@ class AuthController(
             val newToken = authenticationService.refreshAccessToken(request.token)
             ResponseEntity.ok(TokenResponse(token = newToken))
         } catch (_: ExpiredJwtException) {
+            logger.error("Refresh access token is expired")
             ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(TokenResponse(error = "Token expired"))
         } catch (_: JwtException) {
+            logger.error("Refresh access token is invalid")
             ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(TokenResponse(error = "Invalid token"))
         }
