@@ -14,7 +14,7 @@ annotation class LogFunctionCall(val logLevel: String = "INFO")
 
 @Aspect
 @Component
-public class LogFunctionCallAspect(private val defaultLogLevel: String = "INFO") {
+class LogFunctionCallAspect(private val defaultLogLevel: String = "INFO") {
 
     @Around("@annotation(LogFunctionCall)")
     @Throws(Throwable::class)

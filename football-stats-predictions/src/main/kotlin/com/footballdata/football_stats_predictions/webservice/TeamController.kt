@@ -54,7 +54,20 @@ class TeamController(
             }
             ResponseEntity.ok(players)
         } catch (e: Exception) {
-            logger.error("Error fetching team composition for $teamName: ${e.message}")
+            //sanitize the error message
+            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
+                "An error occurred while fetching team composition."
+            } else {
+                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
+            }
+
+            //sanitize team name to securely log user-controlled data
+            val sanitizedTeamName = if (teamName.isBlank()) {
+                "Unknown Team"
+            } else {
+                teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
+            }
+            logger.error("Error fetching team composition for $sanitizedTeamName: $sanitizedMessage")
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
@@ -101,7 +114,20 @@ class TeamController(
             }
             ResponseEntity.ok(matches)
         } catch (e: Exception) {
-            logger.error("Error fetching scheduled Matches for $teamName: ${e.message}")
+            //sanitize the error message
+            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
+                "An error occurred while fetching team composition."
+            } else {
+                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
+            }
+
+            //sanitize team name to securely log user-controlled data
+            val sanitizedTeamName = if (teamName.isBlank()) {
+                "Unknown Team"
+            } else {
+                teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
+            }
+            logger.error("Error fetching scheduled Matches for $sanitizedTeamName: $sanitizedMessage")
             authentication.let {
                 queryHistoryService.saveQuery(
                     userName = it.name,
