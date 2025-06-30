@@ -4,11 +4,12 @@ import com.footballdata.football_stats_predictions.model.PlayerStats
 import com.footballdata.football_stats_predictions.service.StatsAnalyzerService
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
+import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import kotlin.math.roundToInt
 
 @Component
 class PlayerScraper(
@@ -22,21 +23,10 @@ class PlayerScraper(
      */
     fun getPlayerData(playerName: String): PlayerStats {
         return WebDriverUtils.withSearchAndAcceptCookies(playerName) { driver ->
-            // Use a functional approach to map headers with values
-            driver.findElement(By.id("player-table-statistics-head"))
-                .findElements(By.tagName("tr")).first()
-                .findElements(By.tagName("th"))
-                .drop(1)
-                .zip(
-                    driver.findElement(By.id("player-table-statistics-body"))
-                        .findElements(By.tagName("tr")).last()
-                        .findElements(By.tagName("td"))
-                        .drop(1)
-                )
-                .associate { (header, cell) ->
-                    header.text to (cell.text.toDoubleOrNull() ?: 0.0)
-                }
-                .let { PlayerStats(it) }
+            val headers = extractPlayerStatHeaders(driver)
+            val values = extractPlayerStatValues(driver)
+            val statsMap = zipHeadersWithValues(headers, values)
+            PlayerStats(statsMap)
         }
     }
 
@@ -49,18 +39,9 @@ class PlayerScraper(
      */
     fun getPlayerRatingsAverage(playerName: String): Double {
         return WebDriverUtils.withSearchAndSubNavigation(playerName, "Estadísticas del Partido") { driver, wait ->
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary-matches")))
-
-            driver.findElement(By.id("statistics-table-summary-matches"))
-                .findElement(By.id("player-table-statistics-body"))
-                .findElements(By.cssSelector("td.rating"))
-                .mapNotNull { it.text.trim().toDoubleOrNull() }
-                .take(10)
-                .let { ratings ->
-                    if (ratings.isNotEmpty())
-                        (ratings.average() * 100).roundToInt() / 100.0
-                    else 0.0
-                }
+            waitForMatchStatisticsTable(wait)
+            val ratings = extractPlayerRatings(driver)
+            statsAnalyzerService.calculateAverageWithRounding(ratings)
         }
     }
 
@@ -90,10 +71,10 @@ class PlayerScraper(
             val headers = extractTableHeaders(statsDiv)
             val (jgdosIndex, tppIndex) = statsAnalyzerService.findColumnIndices(headers, "Jgdos", "TpP")
 
-            // Procesar datos de las filas del año específico
+            // Processing data from the specific year rows
             val (stats, counts) = processYearData(statsDiv, year, headers, jgdosIndex, tppIndex)
 
-            // Convertir sumas a promedios donde corresponda
+            // Convert sums to averages where applicable
             val finalStats = statsAnalyzerService.calculateStatsAverages(stats, counts, headers, tppIndex)
 
             PlayerStats(finalStats)
@@ -105,6 +86,54 @@ class PlayerScraper(
             .findElement(By.tagName("tr"))
             .findElements(By.tagName("th"))
             .map { it.text.trim() }
+    }
+
+    /**
+     * Extracts the header elements from the player statistics table.
+     */
+    private fun extractPlayerStatHeaders(driver: WebDriver): List<WebElement> {
+        return driver.findElement(By.id("player-table-statistics-head"))
+            .findElements(By.tagName("tr")).first()
+            .findElements(By.tagName("th"))
+            .drop(1)
+    }
+
+    /**
+     * Extracts the value elements from the player statistics table.
+     */
+    private fun extractPlayerStatValues(driver: WebDriver): List<WebElement> {
+        return driver.findElement(By.id("player-table-statistics-body"))
+            .findElements(By.tagName("tr")).last()
+            .findElements(By.tagName("td"))
+            .drop(1)
+    }
+
+    /**
+     * Combines header elements with their corresponding value elements and converts to a map.
+     */
+    private fun zipHeadersWithValues(headers: List<WebElement>, values: List<WebElement>): Map<String, Double> {
+        return headers.zip(values)
+            .associate { (header, cell) ->
+                header.text to (cell.text.toDoubleOrNull() ?: 0.0)
+            }
+    }
+
+    /**
+     * Waits for the match statistics table to be visible.
+     */
+    private fun waitForMatchStatisticsTable(wait: WebDriverWait) {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("statistics-table-summary-matches")))
+    }
+
+    /**
+     * Extracts player ratings from the match statistics table.
+     */
+    private fun extractPlayerRatings(driver: WebDriver): List<Double> {
+        return driver.findElement(By.id("statistics-table-summary-matches"))
+            .findElement(By.id("player-table-statistics-body"))
+            .findElements(By.cssSelector("td.rating"))
+            .mapNotNull { it.text.trim().toDoubleOrNull() }
+            .take(10)
     }
 
     private fun processYearData(

@@ -5,6 +5,9 @@ import com.footballdata.football_stats_predictions.service.StatsAnalyzerService
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.WebDriver
+import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -21,34 +24,15 @@ class TeamScraper(
      */
     fun getTeamData(teamName: String): TeamStats {
         return WebDriverUtils.withSearchAndAcceptCookies(teamName) { driver ->
-            // Find the team statistics table body and header
-            val tableBody = driver.findElement(By.id("top-team-stats-summary-content"))
-            val tableHeader = driver.findElement(By.cssSelector("#top-team-stats-summary-grid thead"))
+            // Extract headers and values
+            val headerElements = extractTableHeaders(driver)
+            val valueElements = extractTotalRowValues(driver)
 
-            // Find the last row of the statistics table, and the first row of the header
-            val totalRow = (tableBody.findElements(By.tagName("tr"))).last()
-            val namesRow = (tableHeader.findElements(By.tagName("tr"))).first()
+            // Combine headers with values and build statistics
+            val headerValuePairs = zipHeadersWithValues(headerElements, valueElements)
+            val statsMap = statsAnalyzerService.buildTeamStatsMap(headerValuePairs)
 
-            // Maps the names of the columns with the values of the last row using totalRow and namesRow
-            // Note: the first cell contains the "Campeonato" and "Total/Promedio" headers, so we skip it
-            // Use zip to map headers with values and transform functionally
-            namesRow.findElements(By.tagName("th"))
-                .drop(1)
-                .zip(totalRow.findElements(By.tagName("td")).drop(1))
-                .flatMap { (header, cell) ->
-                    if (header.text == "Disciplina") {
-                        listOf(
-                            "Yellow Cards" to (cell.findElement(By.cssSelector(".yellow-card-box")).text.toDoubleOrNull()
-                                ?: 0.0),
-                            "Red Cards" to (cell.findElement(By.cssSelector(".red-card-box")).text.toDoubleOrNull()
-                                ?: 0.0)
-                        )
-                    } else {
-                        listOf(header.text to (cell.text.toDoubleOrNull() ?: 0.0))
-                    }
-                }
-                .toMap()
-                .let { TeamStats(it) }
+            TeamStats(statsMap)
         }
     }
 
@@ -105,37 +89,76 @@ class TeamScraper(
                 TeamStats(stats.data + advancedStats.data + results.data)
             }
 
+    /**
+     * Scrapes the match results for a specific team from their fixture page.
+     * Navigates to the team's matches section, extracts result elements,
+     * classifies them (win/draw/loss), and converts the counts into statistics.
+     *
+     * @param teamName The name of the team to search for
+     * @return TeamStats object containing the team's match result statistics (wins, draws, losses)
+     */
     private fun scrapeMatchResults(teamName: String): TeamStats {
         return WebDriverUtils.withSearchAndSubNavigation(teamName, "Encuentros") { driver, wait ->
-        // Wait for the fixtures wrapper to appear
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("team-fixture-wrapper")))
-            // Get all items of results
-            driver.findElement(By.id("team-fixture-wrapper"))
-                .findElements(By.cssSelector("a[class^=' box ']"))
-                // Convert each item into its result type
-                .map { box ->
-                    when {
-                        box.getAttribute("class")?.contains("box w") == true -> ResultType.WIN
-                        box.getAttribute("class")?.contains("box d") == true -> ResultType.DRAW
-                        box.getAttribute("class")?.contains("box l") == true -> ResultType.LOSS
-                        else -> ResultType.OTHER
-                    }
-                }
-                // Group and count results
-                .groupingBy { it }
-                .eachCount()
-                // Convert a count map to double values
-                .let { countMap ->
-                    mapOf(
-                        "Wins" to (countMap[ResultType.WIN] ?: 0).toDouble(),
-                        "Draws" to (countMap[ResultType.DRAW] ?: 0).toDouble(),
-                        "Losses" to (countMap[ResultType.LOSS] ?: 0).toDouble()
-                    )
-                }
-                // Create the TeamStats object with the final map
-                .let { TeamStats(it) }
+            // Wait and get the items
+            val matchBoxes = waitForAndExtractMatchBoxes(driver, wait)
+
+            // Ranking and counting results
+            val resultCounts = countMatchResults(matchBoxes)
+
+            // Convert counts to statistics
+            statsAnalyzerService.convertMatchResultsToStats(resultCounts)
         }
     }
 
-    private enum class ResultType { WIN, DRAW, LOSS, OTHER }
+    /**
+     * Wait for it to load the match container and extract the result items
+     */
+    private fun waitForAndExtractMatchBoxes(driver: WebDriver, wait: WebDriverWait): List<WebElement> {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("team-fixture-wrapper")))
+        return driver.findElement(By.id("team-fixture-wrapper"))
+            .findElements(By.cssSelector("a[class^=' box ']"))
+    }
+
+    /**
+     * Sort each match result and count occurrences by type
+     */
+    private fun countMatchResults(matchBoxes: List<WebElement>): Map<StatsAnalyzerService.ResultType, Int> {
+        return matchBoxes
+            .map { box ->
+                statsAnalyzerService.classifyMatchResult(box.getAttribute("class"))
+            }
+            .groupingBy { it }
+            .eachCount()
+    }
+
+    /**
+     * Extracts the header elements from the team statistics table
+     */
+    private fun extractTableHeaders(driver: WebDriver): List<WebElement> {
+        return driver.findElement(By.id("top-team-stats-summary-grid"))
+            .findElement(By.tagName("thead"))
+            .findElements(By.tagName("tr")).first()
+            .findElements(By.tagName("th"))
+            .drop(1)  // Skip the first header cell which contains metadata
+    }
+
+    /**
+     * Extracts the values from the total row in the team statistics table
+     */
+    private fun extractTotalRowValues(driver: WebDriver): List<WebElement> {
+        return driver.findElement(By.id("top-team-stats-summary-content"))
+            .findElements(By.tagName("tr")).last()
+            .findElements(By.tagName("td"))
+            .drop(1)  // Skip the first cell which contains "Total/Promedio"
+    }
+
+    /**
+     * Combines header elements with their corresponding value elements
+     */
+    private fun zipHeadersWithValues(
+        headers: List<WebElement>,
+        values: List<WebElement>
+    ): List<Pair<WebElement, WebElement>> {
+        return headers.zip(values)
+    }
 }
