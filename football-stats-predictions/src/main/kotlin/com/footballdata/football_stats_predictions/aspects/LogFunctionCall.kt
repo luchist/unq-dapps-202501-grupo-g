@@ -41,9 +41,8 @@ class LogFunctionCallAspect(private val defaultLogLevel: String = "INFO") {
             "INFO" -> logger.info(message)
             "WARN" -> logger.warn(message)
             "ERROR" -> logger.error(message)
-            else -> logger.info(message) // default to INFO
+            else -> logger.info(message) // defaults to INFO
         }
         return joinPoint.proceed()
     }
-
 }
