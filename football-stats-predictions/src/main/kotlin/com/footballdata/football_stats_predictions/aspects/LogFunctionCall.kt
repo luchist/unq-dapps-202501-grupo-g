@@ -5,44 +5,57 @@ import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Component
-
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class LogFunctionCall(val logLevel: String = "INFO")
+annotation class LogFunctionCall()
 
 @Aspect
 @Component
-class LogFunctionCallAspect(private val defaultLogLevel: String = "INFO") {
+class LogFunctionCallAspect() {
 
     @Around("@annotation(LogFunctionCall)")
     @Throws(Throwable::class)
     fun logFunctionCall(joinPoint: ProceedingJoinPoint): Any? {
-        // Get the method signature and annotation details
-        val signature = joinPoint.signature as MethodSignature
-        val method = signature.method
-        val annotation = method.getAnnotation(LogFunctionCall::class.java)
-        val logLevel = annotation?.logLevel ?: defaultLogLevel
 
-        // Logs method name and arguments if any
+        // Get the method signature and class name
+        val signature = joinPoint.signature as MethodSignature
+        val className = joinPoint.target.javaClass.simpleName.toString()
+
+        // Logs class name and method name with parameters
         val message =
             if (joinPoint.args.isEmpty()) {
-                "Function called: \'${joinPoint.signature.name}\' with no arguments"
+                "Invoked: " + className + "." + signature.name + " with no arguments"
             } else {
-                "Function called: \'${joinPoint.signature.name}\'" +
-                        " with arguments: ${joinPoint.args.joinToString(", ")}"
+                "Invoked: " + className + "." + signature.name +
+                        " with arguments: {${parametersToString(joinPoint.args)}}"
             }
 
-        //Log level
-        when (logLevel.uppercase()) {
-            "TRACE" -> logger.trace(message)
-            "DEBUG" -> logger.debug(message)
-            "INFO" -> logger.info(message)
-            "WARN" -> logger.warn(message)
-            "ERROR" -> logger.error(message)
-            else -> logger.info(message) // defaults to INFO
+        val startTime = System.currentTimeMillis()
+
+        val result = joinPoint.proceed()
+
+        // capture time taken to execute the method
+        val endTime = System.currentTimeMillis()
+        val timeTaken = endTime - startTime
+
+        // Log the method execution time
+        logger.info("$message in $timeTaken ms")
+
+        return result
+    }
+
+    private fun parametersToString(parameterArray: Array<Any?>): String {
+        // if the parameter is UsernamePasswordAuthenticationToken only log the username
+        val parameterArray = parameterArray.map { param ->
+            when (param) {
+                is UsernamePasswordAuthenticationToken -> "[User: ${param.name}]"
+                is String, is Number, is Boolean -> param
+                else -> if (param != null) "Object of type ${param::class.simpleName}" else "null"
+            }
         }
-        return joinPoint.proceed()
+        return parameterArray.joinToString(", ")
     }
 }
