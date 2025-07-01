@@ -5,6 +5,7 @@ import com.footballdata.football_stats_predictions.logger
 import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
+import com.footballdata.football_stats_predictions.utils.SanitizationUtils
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -54,19 +55,13 @@ class TeamController(
             }
             ResponseEntity.ok(players)
         } catch (e: Exception) {
-            //sanitize the error message
-            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
-                "An error occurred while fetching team composition."
-            } else {
-                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
-            }
+            //sanitize the error message and team name to securely log user-controlled data
+            val sanitizedMessage =
+                SanitizationUtils.sanitizeString(e.message, "An error occurred while fetching team composition.")
 
-            //sanitize team name to securely log user-controlled data
-            val sanitizedTeamName = if (teamName.isBlank()) {
-                "Unknown Team"
-            } else {
-                teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
-            }
+            val sanitizedTeamName =
+                SanitizationUtils.sanitizeString(teamName, "Unknown Team")
+
             logger.error("Error fetching team composition for $sanitizedTeamName: $sanitizedMessage")
             authentication.let {
                 queryHistoryService.saveQuery(
@@ -114,19 +109,13 @@ class TeamController(
             }
             ResponseEntity.ok(matches)
         } catch (e: Exception) {
-            //sanitize the error message
-            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
-                "An error occurred while fetching team composition."
-            } else {
-                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
-            }
+            //sanitize the error message and team name to securely log user-controlled data
+            val sanitizedMessage =
+                SanitizationUtils.sanitizeString(e.message, "An error occurred while fetching team scheduled matches.")
 
-            //sanitize team name to securely log user-controlled data
-            val sanitizedTeamName = if (teamName.isBlank()) {
-                "Unknown Team"
-            } else {
-                teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
-            }
+            val sanitizedTeamName =
+                SanitizationUtils.sanitizeString(teamName, "Unknown Team")
+
             logger.error("Error fetching scheduled Matches for $sanitizedTeamName: $sanitizedMessage")
             authentication.let {
                 queryHistoryService.saveQuery(
