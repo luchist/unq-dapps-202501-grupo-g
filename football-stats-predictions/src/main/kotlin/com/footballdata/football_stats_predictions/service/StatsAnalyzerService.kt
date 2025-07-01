@@ -2,6 +2,7 @@ package com.footballdata.football_stats_predictions.service
 
 import com.footballdata.football_stats_predictions.model.Stats
 import com.footballdata.football_stats_predictions.model.TeamStats
+import com.footballdata.football_stats_predictions.model.TeamStatsBuilder
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.springframework.stereotype.Service
@@ -58,12 +59,12 @@ class StatsAnalyzerService() {
             else 0.0)
                 .toRounded()
 
-            TeamStats(
-                mapOf(
+            TeamStatsBuilder()
+                .withData(mapOf(
                     "Goals per game" to goalsPerGame,
                     "Shot Effectiveness" to shotEffectiveness
-                )
-            )
+                ))
+                .build()
         }
 
     /**
@@ -155,13 +156,13 @@ class StatsAnalyzerService() {
      * @return TeamStats object with numeric representations of match results
      */
     fun convertMatchResultsToStats(resultCounts: Map<ResultType, Int>): TeamStats {
-        return TeamStats(
-            mapOf(
+        return TeamStatsBuilder()
+            .withData(mapOf(
                 "Wins" to (resultCounts[ResultType.WIN] ?: 0).toDouble(),
                 "Draws" to (resultCounts[ResultType.DRAW] ?: 0).toDouble(),
                 "Losses" to (resultCounts[ResultType.LOSS] ?: 0).toDouble()
-            )
-        )
+            ))
+            .build()
     }
 
     /**

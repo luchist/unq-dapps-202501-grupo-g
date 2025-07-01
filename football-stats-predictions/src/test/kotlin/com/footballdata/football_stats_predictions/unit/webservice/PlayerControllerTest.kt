@@ -1,9 +1,10 @@
 package com.footballdata.football_stats_predictions.unit.webservice
 
-import com.footballdata.football_stats_predictions.model.PlayerStats
+import com.footballdata.football_stats_predictions.model.PlayerStatsBuilder
 import com.footballdata.football_stats_predictions.service.PlayerService
 import com.footballdata.football_stats_predictions.webservice.PlayerController
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
@@ -11,6 +12,7 @@ import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.security.core.Authentication
 
 @ExtendWith(MockitoExtension::class)
 class PlayerControllerTest {
@@ -21,13 +23,21 @@ class PlayerControllerTest {
     @InjectMocks
     private lateinit var playerController: PlayerController
 
+    @Mock
+    private lateinit var authentication: Authentication
+
+    @BeforeEach
+    fun setup() {
+        `when`(authentication.name).thenReturn("testUser")
+    }
+
     @Test
     fun `getPlayerStats should return player statistics`() {
         // Arrange
         val playerName = "Lionel Messi"
-        val expectedStats = PlayerStats(
-            mapOf(
-                "Campeonato" to 0.0,
+        val expectedStats = PlayerStatsBuilder()
+            .withPlayerName(playerName)
+            .withData(mapOf(
                 "Jgdos" to 35.0,
                 "Mins" to 1842.0,
                 "Goles" to 20.0,
@@ -39,12 +49,12 @@ class PlayerControllerTest {
                 "Aéreos" to 0.1,
                 "JdelP" to 9.0,
                 "Rating" to 7.93
-            )
-        )
+            ))
+            .build()
         `when`(playerService.getPlayerStats(playerName)).thenReturn(expectedStats)
 
         // Act
-        val result = playerController.getPlayerStats(playerName)
+        val result = playerController.getPlayerStats(playerName, authentication)
 
         // Assert
         assertEquals(expectedStats, result)
@@ -55,11 +65,14 @@ class PlayerControllerTest {
     fun `getPlayerStats should return empty map for unknown player`() {
         // Arrange
         val playerName = "Unknown Player"
-        val emptyStats = PlayerStats(emptyMap())
+        val emptyStats = PlayerStatsBuilder()
+            .withPlayerName(playerName)
+            .withData(emptyMap())
+            .build()
         `when`(playerService.getPlayerStats(playerName)).thenReturn(emptyStats)
 
         // Act
-        val result = playerController.getPlayerStats(playerName)
+        val result = playerController.getPlayerStats(playerName, authentication)
 
         // Assert
         assertEquals(emptyStats, result)
@@ -74,7 +87,7 @@ class PlayerControllerTest {
         `when`(playerService.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
 
         // Act
-        val result = playerController.getPlayerRatingsAverage(playerName)
+        val result = playerController.getPlayerRatingsAverage(playerName, authentication)
 
         // Assert
         assertEquals(expectedRating, result)
@@ -89,7 +102,7 @@ class PlayerControllerTest {
         `when`(playerService.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
 
         // Act
-        val result = playerController.getPlayerRatingsAverage(playerName)
+        val result = playerController.getPlayerRatingsAverage(playerName, authentication)
 
         // Assert
         assertEquals(expectedRating, result)
@@ -104,7 +117,7 @@ class PlayerControllerTest {
         `when`(playerService.getPlayerRatingsAverage(playerName)).thenReturn(expectedRating)
 
         // Act
-        val result = playerController.getPlayerRatingsAverage(playerName)
+        val result = playerController.getPlayerRatingsAverage(playerName, authentication)
 
         // Assert
         assertEquals(expectedRating, result)
@@ -149,7 +162,7 @@ class PlayerControllerTest {
         `when`(playerService.comparePlayerHistory(playerName, year)).thenReturn(expectedComparison)
 
         // Act
-        val result = playerController.comparePlayerHistory(playerName, year)
+        val result = playerController.comparePlayerHistory(playerName, year, authentication)
 
         // Assert
         assertEquals(expectedComparison, result)
@@ -165,7 +178,7 @@ class PlayerControllerTest {
         `when`(playerService.comparePlayerHistory(playerName, year)).thenReturn(emptyComparison)
 
         // Act
-        val result = playerController.comparePlayerHistory(playerName, year)
+        val result = playerController.comparePlayerHistory(playerName, year, authentication)
 
         // Assert
         assertEquals(emptyComparison, result)
@@ -192,7 +205,7 @@ class PlayerControllerTest {
         `when`(playerService.comparePlayerHistory(playerName, year)).thenReturn(expectedComparison)
 
         // Act
-        val result = playerController.comparePlayerHistory(playerName, year)
+        val result = playerController.comparePlayerHistory(playerName, year, authentication)
 
         // Assert
         assertEquals(expectedComparison, result)
@@ -219,7 +232,7 @@ class PlayerControllerTest {
         `when`(playerService.comparePlayerHistory(playerName, year)).thenReturn(identicalComparison)
 
         // Act
-        val result = playerController.comparePlayerHistory(playerName, year)
+        val result = playerController.comparePlayerHistory(playerName, year, authentication)
 
         // Assert
         assertEquals(identicalComparison, result)

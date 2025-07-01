@@ -5,10 +5,10 @@ import com.footballdata.football_stats_predictions.data.TeamScraper
 import com.footballdata.football_stats_predictions.model.Match
 import com.footballdata.football_stats_predictions.model.PlayerBuilder
 import com.footballdata.football_stats_predictions.model.Team
-import com.footballdata.football_stats_predictions.model.TeamStats
-import com.footballdata.football_stats_predictions.repositories.PlayerRepository
-import com.footballdata.football_stats_predictions.repositories.TeamRepository
+import com.footballdata.football_stats_predictions.model.TeamStatsBuilder
+import com.footballdata.football_stats_predictions.repositories.*
 import com.footballdata.football_stats_predictions.service.TeamService
+import com.footballdata.football_stats_predictions.utils.PersistenceHelper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -39,10 +39,30 @@ class TeamServiceTest {
 
     private lateinit var teamService: TeamService
 
+    @Mock
+    private lateinit var teamStatsRepository: TeamStatsRepository
+
+    @Mock
+    private lateinit var comparisonRepository: ComparisonRepository
+
+    @Mock
+    private lateinit var matchPredictionRepository: MatchPredictionRepository
+
+    @Mock
+    private lateinit var persistenceHelper: PersistenceHelper
+
     @BeforeEach
     fun setup() {
-        teamService = TeamService(footballDataAPI, teamScraper, playerRepository, teamRepository)
-    }
+        teamService = TeamService(
+            footballDataAPI,
+            teamScraper,
+            playerRepository,
+            teamRepository,
+            teamStatsRepository,
+            comparisonRepository,
+            matchPredictionRepository,
+            persistenceHelper
+        )    }
 
     @Test
     fun `should return cached players when team exists in database`() {
@@ -178,8 +198,8 @@ class TeamServiceTest {
     fun `should return team statistics from scraping service`() {
         // Arrange
         val teamName = "Barcelona"
-        val expectedStats = TeamStats(
-            mapOf(
+        val expectedStats = TeamStatsBuilder()
+            .withData(mapOf(
                 "Apps" to 25.0,
                 "Goles" to 47.0,
                 "Tiros pp" to 12.8,
@@ -189,8 +209,8 @@ class TeamServiceTest {
                 "AciertoPase%" to 86.0,
                 "Aéreos" to 12.4,
                 "Rating" to 6.62
-            )
-        )
+            ))
+            .build()
 
         `when`(teamScraper.getTeamData(teamName)).thenReturn(expectedStats)
 
@@ -206,7 +226,9 @@ class TeamServiceTest {
     fun `should return empty map when no team statistics available`() {
         // Arrange
         val teamName = "UnknownTeam"
-        val emptyStats = TeamStats(emptyMap())
+        val emptyStats = TeamStatsBuilder()
+            .withData(emptyMap())
+            .build()
 
         `when`(teamScraper.getTeamData(teamName)).thenReturn(emptyStats)
 
@@ -222,13 +244,15 @@ class TeamServiceTest {
     fun `should return advanced team statistics from scraping service`() {
         // Arrange
         val teamName = "Real Madrid"
-        val expectedAdvancedStats = TeamStats(mapOf(
-            "Goles por Partido" to 2.19,
-            "Efectividad de Tiros" to 7.35,
-            "Ganados" to 42.0,
-            "Empatados" to 8.0,
-            "Perdidos" to 13.0
-        ))
+        val expectedAdvancedStats = TeamStatsBuilder()
+            .withData(mapOf(
+                "Goles por Partido" to 2.19,
+                "Efectividad de Tiros" to 7.35,
+                "Ganados" to 42.0,
+                "Empatados" to 8.0,
+                "Perdidos" to 13.0
+            ))
+            .build()
 
         `when`(teamScraper.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
 

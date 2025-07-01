@@ -1,9 +1,12 @@
 package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.data.PlayerScraper
-import com.footballdata.football_stats_predictions.model.PlayerStats
+import com.footballdata.football_stats_predictions.model.PlayerStatsBuilder
+import com.footballdata.football_stats_predictions.repositories.ComparisonRepository
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
+import com.footballdata.football_stats_predictions.repositories.PlayerStatsRepository
 import com.footballdata.football_stats_predictions.service.PlayerService
+import com.footballdata.football_stats_predictions.utils.PersistenceHelper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -25,25 +28,42 @@ class PlayerServiceTest {
 
     private lateinit var playerService: PlayerService
 
+    @Mock
+    private lateinit var playerStatsRepository: PlayerStatsRepository
+
+    @Mock
+    private lateinit var comparisonRepository: ComparisonRepository
+
+    @Mock
+    private lateinit var persistenceHelper: PersistenceHelper
+
     @BeforeEach
     fun setup() {
-        playerService = PlayerService(playerScraper, playerRepository)
-    }
+        playerService = PlayerService(
+            playerScraper,
+            playerRepository,
+            playerStatsRepository,
+            comparisonRepository,
+            persistenceHelper
+        )    }
 
     @Test
     fun `should return player statistics from scraping service`() {
         // Arrange
         val playerName = "Lionel Messi"
-        val expectedStats = PlayerStats(mapOf(
-            "goals" to 15.0,
-            "assists" to 8.0,
-            "shots_per_game" to 4.2,
-            "pass_accuracy" to 89.5,
-            "dribbles_completed" to 3.8,
-            "minutes_played" to 2340.0,
-            "key_passes" to 2.1,
-            "successful_tackles" to 0.8
-        ))
+        val expectedStats = PlayerStatsBuilder()
+            .withPlayerName(playerName)
+            .withData(mapOf(
+                "goals" to 15.0,
+                "assists" to 8.0,
+                "shots_per_game" to 4.2,
+                "pass_accuracy" to 89.5,
+                "dribbles_completed" to 3.8,
+                "minutes_played" to 2340.0,
+                "key_passes" to 2.1,
+                "successful_tackles" to 0.8
+            ))
+            .build()
 
         `when`(playerScraper.getPlayerData(playerName)).thenReturn(expectedStats)
 
@@ -59,7 +79,10 @@ class PlayerServiceTest {
     fun `should return empty map when no player statistics available`() {
         // Arrange
         val playerName = "Unknown Player"
-        val emptyStats = PlayerStats(emptyMap())
+        val emptyStats = PlayerStatsBuilder()
+            .withPlayerName(playerName)
+            .withData(emptyMap())
+            .build()
 
         `when`(playerScraper.getPlayerData(playerName)).thenReturn(emptyStats)
 

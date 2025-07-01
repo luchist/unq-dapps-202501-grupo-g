@@ -2,7 +2,6 @@ package com.footballdata.football_stats_predictions.webservice
 
 import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
 import com.footballdata.football_stats_predictions.logger
-import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
 import io.swagger.v3.oas.annotations.Operation
