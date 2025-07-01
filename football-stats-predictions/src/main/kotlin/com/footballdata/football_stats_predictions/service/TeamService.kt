@@ -2,12 +2,10 @@ package com.footballdata.football_stats_predictions.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
 import com.footballdata.football_stats_predictions.data.TeamScraper
-import com.footballdata.football_stats_predictions.model.Match
-import com.footballdata.football_stats_predictions.model.Player
-import com.footballdata.football_stats_predictions.model.TeamBuilder
-import com.footballdata.football_stats_predictions.model.TeamStats
+import com.footballdata.football_stats_predictions.model.*
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.TeamRepository
+import com.footballdata.football_stats_predictions.repositories.TeamStatsRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,6 +17,7 @@ class TeamService(
     @field:Autowired var teamScraper: TeamScraper,
     @field:Autowired var playerRepository: PlayerRepository,
     @field:Autowired var teamRepository: TeamRepository,
+    @field:Autowired var teamStatsRepository: TeamStatsRepository
 ) {
 
     fun getTeamComposition(teamName: String): List<Player> {
@@ -56,7 +55,23 @@ class TeamService(
     }
 
     fun getTeamStatistics(teamName: String): TeamStats {
-        return teamScraper.getTeamData(teamName)
+        // Buscar primero en la base de datos
+        val cachedStats = teamStatsRepository.findByTeamName(teamName)
+
+        if (cachedStats != null) {
+            return cachedStats
+        }
+
+        // Si no existe, obtener desde la fuente externa
+        val stats = teamScraper.getTeamData(teamName)
+
+        // Crear y guardar la entidad TeamStats
+        val teamStats = TeamStatsBuilder()
+            .withTeamName(teamName)
+            .withData(stats.data)
+            .build()
+
+        return teamStatsRepository.save(teamStats)
     }
 
     fun getTeamAdvancedStatistics(teamName: String): TeamStats {
