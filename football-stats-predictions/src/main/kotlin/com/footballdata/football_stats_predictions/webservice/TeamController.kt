@@ -1,9 +1,9 @@
 package com.footballdata.football_stats_predictions.webservice
 
 import com.footballdata.football_stats_predictions.aspects.LogFunctionCall
+import com.footballdata.football_stats_predictions.aspects.Queryable
 import com.footballdata.football_stats_predictions.logger
 import com.footballdata.football_stats_predictions.model.TeamStats
-import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
 import com.footballdata.football_stats_predictions.utils.SanitizationUtils
 import io.swagger.v3.oas.annotations.Operation
@@ -23,9 +23,9 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/team")
 @Tag(name = "Team", description = "Endpoints for team-related operations")
 class TeamController(
-    @field:Autowired var teamService: TeamService,
-    @field:Autowired var queryHistoryService: QueryHistoryService
+    @field:Autowired var teamService: TeamService
 ) {
+
     @Operation(summary = "Get all team members", description = "Returns a list of Players of a Team")
     @ApiResponses(
         value = [
@@ -35,6 +35,7 @@ class TeamController(
     )
     @GetMapping("/{teamName}")
     @LogFunctionCall
+    @Queryable(includeParams = ["teamName"]) // Aspect will automatically handle query history
     fun getTeamComposition(
         @Parameter(
             description = "The team name that needs to be fetched",
@@ -45,35 +46,18 @@ class TeamController(
     ): ResponseEntity<Any> {
         return try {
             val players = teamService.getTeamComposition(teamName)
-            authentication.let {
-                queryHistoryService.saveQuery(
-                    userName = it.name,
-                    endpoint = "/api/team/$teamName",
-                    queryParams = "teamName=$teamName",
-                    status = 200
-                )
-            }
             ResponseEntity.ok(players)
         } catch (e: Exception) {
-            //sanitize the error message and team name to securely log user-controlled data
+            // Sanitize the error message and team name to securely log user-controlled data
             val sanitizedMessage =
                 SanitizationUtils.sanitizeString(e.message, "An error occurred while fetching team composition.")
-
             val sanitizedTeamName =
                 SanitizationUtils.sanitizeString(teamName, "Unknown Team")
 
             logger.error("Error fetching team composition for $sanitizedTeamName: $sanitizedMessage")
-            authentication.let {
-                queryHistoryService.saveQuery(
-                    userName = it.name,
-                    endpoint = "/api/team/$teamName",
-                    queryParams = "teamName=$teamName",
-                    status = 404,
-                    message = "Team not found." + e.message
-                )
-            }
+
             val errorBody = mapOf(
-                "message" to ("Team not found"),
+                "message" to "Team not found",
                 "error" to 404
             )
             ResponseEntity.status(404).body(errorBody)
@@ -89,6 +73,7 @@ class TeamController(
     )
     @GetMapping("/{teamName}/matches")
     @LogFunctionCall
+    @Queryable(includeParams = ["teamName"]) // Aspect automatically captures teamName parameter
     fun getScheduledMatches(
         @Parameter(
             description = "The team name for which scheduled matches are needed",
@@ -99,35 +84,18 @@ class TeamController(
     ): ResponseEntity<Any> {
         return try {
             val matches = teamService.getScheduledMatches(teamName)
-            authentication.let {
-                queryHistoryService.saveQuery(
-                    userName = it.name,
-                    endpoint = "/api/team/$teamName/matches",
-                    queryParams = "teamName=$teamName",
-                    status = 200
-                )
-            }
             ResponseEntity.ok(matches)
         } catch (e: Exception) {
-            //sanitize the error message and team name to securely log user-controlled data
+            // Sanitize the error message and team name to securely log user-controlled data
             val sanitizedMessage =
                 SanitizationUtils.sanitizeString(e.message, "An error occurred while fetching team scheduled matches.")
-
             val sanitizedTeamName =
                 SanitizationUtils.sanitizeString(teamName, "Unknown Team")
 
             logger.error("Error fetching scheduled Matches for $sanitizedTeamName: $sanitizedMessage")
-            authentication.let {
-                queryHistoryService.saveQuery(
-                    userName = it.name,
-                    endpoint = "/api/team/$teamName/matches",
-                    queryParams = "teamName=$teamName",
-                    status = 404,
-                    message = "Team not found." + e.message
-                )
-            }
+
             val errorBody = mapOf(
-                "message" to ("Team not found"),
+                "message" to "Team not found",
                 "error" to 404
             )
             ResponseEntity.status(404).body(errorBody)
@@ -144,6 +112,7 @@ class TeamController(
     )
     @GetMapping("/stats/{teamName}")
     @LogFunctionCall
+    @Queryable // Default behavior: captures all @PathVariable and @RequestParam
     fun getTeamStats(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamStatistics(teamName)
     }
@@ -161,6 +130,7 @@ class TeamController(
     )
     @GetMapping("/advanced/{teamName}")
     @LogFunctionCall
+    @Queryable // Captures teamName automatically
     fun getTeamAdvancedStatistics(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamAdvancedStatistics(teamName)
     }
@@ -175,13 +145,13 @@ class TeamController(
     )
     @GetMapping("/predict/{localTeam}/{awayTeam}")
     @LogFunctionCall
+    @Queryable(includeParams = ["localTeam", "awayTeam"]) // Explicitly specify both parameters
     fun predictMatchProbabilities(
         @PathVariable localTeam: String,
         @PathVariable awayTeam: String
     ): Map<String, Double> {
         return teamService.predictMatchProbabilities(localTeam, awayTeam)
     }
-
 
     @Operation(summary = "Get comparison between two teams", description = "Returns a comparison of two teams")
     @ApiResponses(
@@ -193,11 +163,11 @@ class TeamController(
     )
     @GetMapping("/compare/{localTeam}/{awayTeam}")
     @LogFunctionCall
+    @Queryable(includeParams = ["localTeam", "awayTeam"]) // Captures both team parameters
     fun compareTeams(
         @PathVariable localTeam: String,
         @PathVariable awayTeam: String
     ): Map<String, Map<String, String>> {
         return teamService.compareTeams(localTeam, awayTeam)
     }
-
 }
