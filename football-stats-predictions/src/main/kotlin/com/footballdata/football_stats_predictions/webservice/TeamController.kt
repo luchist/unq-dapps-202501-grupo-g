@@ -35,53 +35,16 @@ class TeamController(
     @GetMapping("/{teamName}")
     @LogFunctionCall
     fun getTeamComposition(
-        @Parameter(
-            description = "The team name that needs to be fetched",
-            required = true
-        )
+        @Parameter(description = "The team name that needs to be fetched", required = true)
         @PathVariable teamName: String,
         authentication: Authentication
     ): ResponseEntity<Any> {
-        return try {
-            val players = teamService.getTeamComposition(teamName)
-            authentication.let {
-                queryHistoryService.saveQuery(
-                    userName = it.name,
-                    endpoint = "/api/team/$teamName",
-                    queryParams = "teamName=$teamName",
-                    status = 200
-                )
-            }
-            ResponseEntity.ok(players)
-        } catch (e: Exception) {
-            //sanitize the error message
-            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
-                "An error occurred while fetching team composition."
-            } else {
-                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
-            }
-
-            //sanitize team name to securely log user-controlled data
-            val sanitizedTeamName = if (teamName.isBlank()) {
-                "Unknown Team"
-            } else {
-                teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
-            }
-            logger.error("Error fetching team composition for $sanitizedTeamName: $sanitizedMessage")
-            authentication.let {
-                queryHistoryService.saveQuery(
-                    userName = it.name,
-                    endpoint = "/api/team/$teamName",
-                    queryParams = "teamName=$teamName",
-                    status = 404,
-                    message = "Team not found." + e.message
-                )
-            }
-            val errorBody = mapOf(
-                "message" to ("Team not found"),
-                "error" to 404
-            )
-            ResponseEntity.status(404).body(errorBody)
+        return executeTeamOperation(
+            teamName = teamName,
+            endpoint = "/api/team/$teamName",
+            authentication = authentication
+        ) {
+            teamService.getTeamComposition(teamName)
         }
     }
 
@@ -102,46 +65,12 @@ class TeamController(
         @PathVariable teamName: String,
         authentication: Authentication
     ): ResponseEntity<Any> {
-        return try {
-            val matches = teamService.getScheduledMatches(teamName)
-            authentication.let {
-                queryHistoryService.saveQuery(
-                    userName = it.name,
-                    endpoint = "/api/team/$teamName/matches",
-                    queryParams = "teamName=$teamName",
-                    status = 200
-                )
-            }
-            ResponseEntity.ok(matches)
-        } catch (e: Exception) {
-            //sanitize the error message
-            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
-                "An error occurred while fetching team composition."
-            } else {
-                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
-            }
-
-            //sanitize team name to securely log user-controlled data
-            val sanitizedTeamName = if (teamName.isBlank()) {
-                "Unknown Team"
-            } else {
-                teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
-            }
-            logger.error("Error fetching scheduled Matches for $sanitizedTeamName: $sanitizedMessage")
-            authentication.let {
-                queryHistoryService.saveQuery(
-                    userName = it.name,
-                    endpoint = "/api/team/$teamName/matches",
-                    queryParams = "teamName=$teamName",
-                    status = 404,
-                    message = "Team not found." + e.message
-                )
-            }
-            val errorBody = mapOf(
-                "message" to ("Team not found"),
-                "error" to 404
-            )
-            ResponseEntity.status(404).body(errorBody)
+        return executeTeamOperation(
+            teamName = teamName,
+            endpoint = "/api/team/$teamName/matches",
+            authentication = authentication
+        ) {
+            teamService.getScheduledMatches(teamName)
         }
     }
 
@@ -155,8 +84,17 @@ class TeamController(
     )
     @GetMapping("/stats/{teamName}")
     @LogFunctionCall
-    fun getTeamStats(@PathVariable teamName: String): TeamStats {
-        return teamService.getTeamStatistics(teamName)
+    fun getTeamStats(
+        @PathVariable teamName: String,
+        authentication: Authentication
+    ): ResponseEntity<Any> {
+        return executeTeamOperation(
+            teamName = teamName,
+            endpoint = "/api/team/stats/$teamName",
+            authentication = authentication
+        ) {
+            teamService.getTeamStatistics(teamName)
+        }
     }
 
     @Operation(
@@ -172,8 +110,17 @@ class TeamController(
     )
     @GetMapping("/advanced/{teamName}")
     @LogFunctionCall
-    fun getTeamAdvancedStatistics(@PathVariable teamName: String): TeamStats {
-        return teamService.getTeamAdvancedStatistics(teamName)
+    fun getTeamAdvancedStatistics(
+        @PathVariable teamName: String,
+        authentication: Authentication
+    ): ResponseEntity<Any> {
+        return executeTeamOperation(
+            teamName = teamName,
+            endpoint = "/api/team/advanced/$teamName",
+            authentication = authentication
+        ) {
+            teamService.getTeamAdvancedStatistics(teamName)
+        }
     }
 
     @Operation(summary = "Get prediction match between two teams", description = "Returns a list of predictions")
@@ -188,9 +135,17 @@ class TeamController(
     @LogFunctionCall
     fun predictMatchProbabilities(
         @PathVariable localTeam: String,
-        @PathVariable awayTeam: String
-    ): Map<String, Double> {
-        return teamService.predictMatchProbabilities(localTeam, awayTeam)
+        @PathVariable awayTeam: String,
+        authentication: Authentication
+    ): ResponseEntity<Any> {
+        return executeTeamsOperation(
+            team1 = localTeam,
+            team2 = awayTeam,
+            endpoint = "/api/team/predict/$localTeam/$awayTeam",
+            authentication = authentication
+        ) {
+            teamService.predictMatchProbabilities(localTeam, awayTeam)
+        }
     }
 
 
@@ -206,9 +161,125 @@ class TeamController(
     @LogFunctionCall
     fun compareTeams(
         @PathVariable localTeam: String,
-        @PathVariable awayTeam: String
-    ): Map<String, Map<String, String>> {
-        return teamService.compareTeams(localTeam, awayTeam)
+        @PathVariable awayTeam: String,
+        authentication: Authentication
+    ): ResponseEntity<Any> {
+        return executeTeamsOperation(
+            team1 = localTeam,
+            team2 = awayTeam,
+            endpoint = "/api/team/compare/$localTeam/$awayTeam",
+            authentication = authentication
+        ) {
+            teamService.compareTeams(localTeam, awayTeam)
+        }
     }
 
+    /**
+     * Utility method to standardize the execution of team-related operations.
+     * Encapsulates common logic for exception handling, query logging, and response formatting.
+     *
+     * @param teamName Name of the team on which the operation is performed
+     * @param endpoint Path of the endpoint being executed
+     * @param authentication Authentication object of the current user
+     * @param operation Lambda function containing the specific operation to execute
+     * @return ResponseEntity with the operation result or standardized error message
+     */
+    private fun <T> executeTeamOperation(
+        teamName: String,
+        endpoint: String,
+        authentication: Authentication,
+        operation: () -> T
+    ): ResponseEntity<Any> {
+        return try {
+            val result = operation()
+            authentication.let {
+                queryHistoryService.saveQuery(
+                    userName = it.name,
+                    endpoint = endpoint,
+                    queryParams = "teamName=$teamName",
+                    status = 200
+                )
+            }
+            ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
+                "An error occurred while processing the request."
+            } else {
+                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
+            }
+
+            val sanitizedTeamName = teamName.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim().ifBlank { "Unknown Team" }
+
+            logger.error("Error processing request for $sanitizedTeamName: $sanitizedMessage")
+            authentication.let {
+                queryHistoryService.saveQuery(
+                    userName = it.name,
+                    endpoint = endpoint,
+                    queryParams = "teamName=$teamName",
+                    status = 404,
+                    message = "Team not found." + e.message
+                )
+            }
+            ResponseEntity.status(404).body(mapOf(
+                "message" to "Team not found",
+                "error" to 404
+            ))
+        }
+    }
+
+    /**
+     * Utility method to standardize the execution of operations involving two teams.
+     * Encapsulates common logic for exception handling, query logging, and response formatting.
+     *
+     * @param team1 Name of the first team
+     * @param team2 Name of the second team
+     * @param endpoint Path of the endpoint being executed
+     * @param authentication Authentication object of the current user
+     * @param operation Lambda function containing the specific operation to execute
+     * @return ResponseEntity with the operation result or standardized error message
+     */
+    private fun <T> executeTeamsOperation(
+        team1: String,
+        team2: String,
+        endpoint: String,
+        authentication: Authentication,
+        operation: () -> T
+    ): ResponseEntity<Any> {
+        return try {
+            val result = operation()
+            authentication.let {
+                queryHistoryService.saveQuery(
+                    userName = it.name,
+                    endpoint = endpoint,
+                    queryParams = "team1=$team1&team2=$team2",
+                    status = 200
+                )
+            }
+            ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            val sanitizedMessage = if (e.message.isNullOrEmpty()) {
+                "An error occurred while processing the request."
+            } else {
+                e.message?.replace("[^a-zA-Z0-9 ]".toRegex(), "")?.trim()
+            }
+
+            val sanitizedTeam1 = team1.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim().ifBlank { "Unknown Team" }
+            val sanitizedTeam2 = team2.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim().ifBlank { "Unknown Team" }
+
+            logger.error("Error processing request for teams $sanitizedTeam1 and $sanitizedTeam2: $sanitizedMessage")
+            authentication.let {
+                queryHistoryService.saveQuery(
+                    userName = it.name,
+                    endpoint = endpoint,
+                    queryParams = "team1=$team1&team2=$team2",
+                    status = 404,
+                    message = "One or more teams not found." + e.message
+                )
+            }
+            ResponseEntity.status(404).body(mapOf(
+                "message" to "One or more teams not found",
+                "error" to 404
+            ))
+        }
+    }
 }
