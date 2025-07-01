@@ -1,10 +1,11 @@
 package com.footballdata.football_stats_predictions.service
 
 import com.footballdata.football_stats_predictions.data.PlayerScraper
-import com.footballdata.football_stats_predictions.model.PlayerStats
-import com.footballdata.football_stats_predictions.model.PlayerStatsBuilder
+import com.footballdata.football_stats_predictions.model.*
+import com.footballdata.football_stats_predictions.repositories.ComparisonRepository
 import com.footballdata.football_stats_predictions.repositories.PlayerRepository
 import com.footballdata.football_stats_predictions.repositories.PlayerStatsRepository
+import com.footballdata.football_stats_predictions.utils.PersistenceHelper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,26 +15,22 @@ import org.springframework.transaction.annotation.Transactional
 class PlayerService(
     @field:Autowired var playerScraper: PlayerScraper,
     @field:Autowired var playerRepository: PlayerRepository,
-    @field:Autowired var playerStatsRepository: PlayerStatsRepository
+    @field:Autowired var playerStatsRepository: PlayerStatsRepository,
+    @field:Autowired var comparisonRepository: ComparisonRepository,
+    @field:Autowired private val persistenceHelper: PersistenceHelper,
 ) {
     fun getPlayerStats(playerName: String): PlayerStats {
-        // Buscar primero en la base de datos
-        val cachedStats = playerStatsRepository.findByPlayerName(playerName)
-
-        if (cachedStats != null) {
-            return cachedStats
-        }
-
-        // Si no existe, obtener desde la fuente externa
-        val stats = playerScraper.getPlayerData(playerName)
-
-        // Crear y guardar la entidad PlayerStats
-        val playerStats = PlayerStatsBuilder()
-            .withPlayerName(playerName)
-            .withData(stats.data)
-            .build()
-
-        return playerStatsRepository.save(playerStats)
+        return persistenceHelper.getCachedOrFetch(
+            repository = playerStatsRepository,
+            findFunction = { playerStatsRepository.findByPlayerName(playerName) },
+            fetchFunction = { playerScraper.getPlayerData(playerName) },
+            entityMapper = { stats ->
+                PlayerStatsBuilder()
+                    .withPlayerName(playerName)
+                    .withData((stats as PlayerStats).data)
+                    .build()
+            }
+        )
     }
 
     fun getPlayerRatingsAverage(playerName: String): Double {
@@ -41,6 +38,24 @@ class PlayerService(
     }
 
     fun comparePlayerHistory(playerName: String, year: String): Map<String, Map<String, String>> {
-        return playerScraper.comparePlayerStatsWithHistory(playerName, year)
+        val comparison = persistenceHelper.getCachedOrFetch(
+            repository = comparisonRepository,
+            findFunction = {
+                comparisonRepository.findByComparisonTypeAndEntity1NameAndEntity2Name(
+                    ComparisonType.PLAYER, playerName, year
+                )
+            },
+            fetchFunction = { playerScraper.comparePlayerStatsWithHistory(playerName, year) },
+            entityMapper = { comparisonData ->
+                @Suppress("UNCHECKED_CAST")
+                Comparison(
+                    comparisonType = ComparisonType.PLAYER,
+                    entity1Name = playerName,
+                    entity2Name = year,
+                    comparisonData = comparisonData as Map<String, Map<String, String>>
+                )
+            }
+        )
+        return comparison.comparisonData
     }
 }
