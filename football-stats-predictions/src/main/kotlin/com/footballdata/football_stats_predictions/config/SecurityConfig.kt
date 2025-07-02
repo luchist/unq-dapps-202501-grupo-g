@@ -56,8 +56,7 @@ class SecurityConfig {
                         "/swagger-ui.html",
                         "/h2-console/**",
                         "/api/auth/**",
-                        "/actuator/health/**",
-                        "/actuator/info/**"
+                        "/actuator/**"
                     ).permitAll()
                     .anyRequest().authenticated()
             }
