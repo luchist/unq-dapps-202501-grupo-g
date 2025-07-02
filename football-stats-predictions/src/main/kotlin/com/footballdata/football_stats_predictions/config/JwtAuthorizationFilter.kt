@@ -29,9 +29,7 @@ class JwtAuthorizationFilter(
             path.startsWith("/swagger-ui.html") ||
             path.startsWith("/h2-console") ||
             path.startsWith("/api/auth") ||
-            path.startsWith("/actuator/prometheus") ||
-            path.startsWith("/actuator/health") ||
-            path.startsWith("/actuator/info")
+            path.startsWith("/actuator")
         ) {
             filterChain.doFilter(request, response)
             return
