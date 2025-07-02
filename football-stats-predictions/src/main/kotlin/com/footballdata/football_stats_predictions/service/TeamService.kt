@@ -37,6 +37,7 @@ class TeamService(
 
         // Save the team to the database
         val team = TeamBuilder()
+            .withId(teamName.toLong())
             .withTeamName(teamNameStr)
             .withPlayers(teamComposition.toMutableList())
             .build()
