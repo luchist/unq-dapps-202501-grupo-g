@@ -13,11 +13,7 @@ class Player(
     val nationality: String,
     var shoots: Int,
     var interceptions: Int
-) {
-    fun calculatePerformanceIndex() {
-        throw NotImplementedError()
-    }
-}
+)
 
 class PlayerBuilder(
     private var id: Long = 0,
