@@ -51,8 +51,8 @@ class QueryableAspect(
     @Around("@annotation(Queryable)")
     @Throws(Throwable::class)
     fun saveInQueryHistory(joinPoint: ProceedingJoinPoint): Any? {
-        var responseStatus = 200
-        var errorMessage: String? = null
+        var responseStatus: Int
+        var errorMessage: String?
 
         try {
             // Extract annotation configuration
