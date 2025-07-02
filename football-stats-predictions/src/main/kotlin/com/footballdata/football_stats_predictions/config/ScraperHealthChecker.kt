@@ -54,7 +54,7 @@ class ScraperHealthChecker(
         val startTime = System.currentTimeMillis()
 
         return try {
-            // Probamos con un equipo popular que debería existir siempre
+            // We tried with a popular team that should always exist
             val testTeam = "Barcelona"
             val stats = teamScraper.getTeamData(testTeam)
             val elapsedTime = System.currentTimeMillis() - startTime
@@ -88,7 +88,7 @@ class ScraperHealthChecker(
         val startTime = System.currentTimeMillis()
 
         try {
-            // Utilizamos un timeout para evitar bloqueos indefinidos
+            // We use a timeout to avoid undefined blocks
             val webDriverResult = withTimeout(timeoutInSeconds) { checkWebDriverConnection() }
 
             if (!webDriverResult.status) {
