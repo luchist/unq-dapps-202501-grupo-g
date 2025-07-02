@@ -11,9 +11,10 @@ import org.springframework.transaction.annotation.Transactional
 class ServicesAreTransactionalTest {
     @ArchTest
     fun services_are_annotated_as_transactional(importedClasses: JavaClasses) {
-        // Ensure that each service class is annotated with @Transactional
         val myRule: ArchRule = classes()
             .that().resideInAPackage("..service..")
+            .and().areNotNestedClasses()
+            .and().haveSimpleNameNotContaining("$") // Excluded compiler generated classes and anonymous classes
             .should().beAnnotatedWith(Transactional::class.java)
 
         myRule.check(importedClasses)
