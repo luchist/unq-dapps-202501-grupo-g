@@ -16,11 +16,11 @@ class CustomInfoContributor(
     override fun contribute(builder: Info.Builder) {
         val appInfo = mutableMapOf<String, Any>()
 
-        // Información básica de la aplicación
+        // Basic information of the application
         appInfo["name"] = "Football Stats Predictions"
         appInfo["version"] = "1.0.0"
 
-        // Estadísticas de caché
+        // cache statics
         val cacheStats = mutableMapOf<String, Any>()
         cacheStats["teamsStats"] = teamStatsRepository.count()
         cacheStats["playersStats"] = playerStatsRepository.count()
@@ -28,7 +28,7 @@ class CustomInfoContributor(
 
         appInfo["cache"] = cacheStats
 
-        // Información del sistema
+        // system information
         val systemInfo = mutableMapOf<String, Any>()
         systemInfo["javaVersion"] = System.getProperty("java.version")
         systemInfo["availableProcessors"] = Runtime.getRuntime().availableProcessors()
