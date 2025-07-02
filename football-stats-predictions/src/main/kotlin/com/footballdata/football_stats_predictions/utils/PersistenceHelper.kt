@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 @Component
 class PersistenceHelper {
     /**
-     * Función genérica para buscar datos en caché o recuperarlos del origen y persistirlos
+     * Find in cache or fetch from an external source, then save to the database.
      */
     fun <T : Any, ID> getCachedOrFetch(
         repository: JpaRepository<T, ID>,
@@ -14,18 +14,18 @@ class PersistenceHelper {
         fetchFunction: () -> Any,
         entityMapper: (Any) -> T
     ): T {
-        // 1. Buscar en la base de datos
+        // Find in cache
         val cachedEntity = findFunction()
 
-        // 2. Si existe en caché, devolverlo
+        // If it exists, return it
         if (cachedEntity != null) {
             return cachedEntity
         }
 
-        // 3. Si no existe, obtener desde la fuente externa
+        // If it does not exist, fetch from the external source
         val fetchedData = fetchFunction()
 
-        // 4. Mapear los datos a una entidad y guardarla
+        // Map the fetched data to the entity type and save it to the database
         val entity = entityMapper(fetchedData)
         return repository.save(entity)
     }
