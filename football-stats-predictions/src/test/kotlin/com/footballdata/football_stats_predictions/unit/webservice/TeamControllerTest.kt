@@ -7,7 +7,6 @@ import com.footballdata.football_stats_predictions.service.QueryHistoryService
 import com.footballdata.football_stats_predictions.service.TeamService
 import com.footballdata.football_stats_predictions.webservice.TeamController
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
@@ -29,14 +28,6 @@ class TeamControllerTest {
 
     @InjectMocks
     private lateinit var teamController: TeamController
-
-    @Mock
-    private lateinit var authentication: Authentication
-
-    @BeforeEach
-    fun setup() {
-        `when`(authentication.name).thenReturn("testUser")
-    }
 
     @Test
     fun `getTeamComposition should return list of players`() {
@@ -136,23 +127,25 @@ class TeamControllerTest {
         val teamName = "Barcelona"
         val expectedStats = TeamStatsBuilder()
             .withTeamName(teamName)
-            .withData(mapOf(
-                "Apps" to 25.0,
-                "Goles" to 47.0,
-                "Tiros pp" to 12.8,
-                "Yellow Cards" to 44.0,
-                "Red Cards" to 0.0,
-                "Posesion%" to 54.5,
-                "AciertoPase%" to 86.0,
-                "Aéreos" to 12.4,
-                "Rating" to 6.62
-            ))
+            .withData(
+                mapOf(
+                    "Apps" to 25.0,
+                    "Goles" to 47.0,
+                    "Tiros pp" to 12.8,
+                    "Yellow Cards" to 44.0,
+                    "Red Cards" to 0.0,
+                    "Posesion%" to 54.5,
+                    "AciertoPase%" to 86.0,
+                    "Aéreos" to 12.4,
+                    "Rating" to 6.62
+                )
+            )
             .build()
 
         `when`(teamService.getTeamStatistics(teamName)).thenReturn(expectedStats)
 
         // Act
-        val result = teamController.getTeamStats(teamName, authentication)
+        val result = teamController.getTeamStats(teamName)
 
         // Assert
         assertEquals(expectedStats, result)
@@ -165,19 +158,21 @@ class TeamControllerTest {
         val teamName = "Barcelona"
         val expectedAdvancedStats = TeamStatsBuilder()
             .withTeamName(teamName)
-            .withData(mapOf(
-                "Goles por Partido" to 1.3846153846153846,
-                "Efectividad de Tiros" to 13.505555555555555,
-                "Ganados" to 25.0,
-                "Empatados" to 12.0,
-                "Perdidos" to 13.0
-            ))
+            .withData(
+                mapOf(
+                    "Goles por Partido" to 1.3846153846153846,
+                    "Efectividad de Tiros" to 13.505555555555555,
+                    "Ganados" to 25.0,
+                    "Empatados" to 12.0,
+                    "Perdidos" to 13.0
+                )
+            )
             .build()
 
         `when`(teamService.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
 
         // Act
-        val result = teamController.getTeamAdvancedStatistics(teamName, authentication)
+        val result = teamController.getTeamAdvancedStatistics(teamName)
 
         // Assert
         assertEquals(expectedAdvancedStats, result)
@@ -197,7 +192,7 @@ class TeamControllerTest {
         `when`(teamService.predictMatchProbabilities(localTeam, awayTeam)).thenReturn(expectedProbabilities)
 
         // Act
-        val result = teamController.predictMatchProbabilities(localTeam, awayTeam, authentication)
+        val result = teamController.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
         assertEquals(expectedProbabilities, result)
@@ -237,7 +232,7 @@ class TeamControllerTest {
         `when`(teamService.compareTeams(localTeam, awayTeam)).thenReturn(expectedComparison)
 
         // Act
-        val result = teamController.compareTeams(localTeam, awayTeam, authentication)
+        val result = teamController.compareTeams(localTeam, awayTeam)
 
         // Assert
         assertEquals(expectedComparison, result)
