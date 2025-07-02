@@ -5,7 +5,6 @@ import com.footballdata.football_stats_predictions.model.ComparisonType
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ComparisonRepository : JpaRepository<Comparison, Long> {
-    // Buscar por tipo y entidades comparadas
     fun findByComparisonTypeAndEntity1NameAndEntity2Name(
         comparisonType: ComparisonType,
         entity1Name: String,

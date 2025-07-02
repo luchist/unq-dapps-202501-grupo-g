@@ -11,18 +11,14 @@ data class Comparison(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    // Tipo de comparación (TEAM o PLAYER)
     @Enumerated(EnumType.STRING)
     val comparisonType: ComparisonType,
 
-    // Identificadores de las entidades comparadas
     val entity1Name: String = "",
     val entity2Name: String = "",
 
-    // Fecha de creación para control de caché
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
-    // Datos de la comparación
     @Column(columnDefinition = "TEXT")
     @Convert(converter = ComparisonDataConverter::class)
     val comparisonData: Map<String, Map<String, String>> = mapOf()
