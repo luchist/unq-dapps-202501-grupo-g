@@ -53,8 +53,13 @@ class FootballDataAPI(
     fun getTeamComposition(teamName: String): List<Player> {
         val requestURL = "v4/teams/$teamName/"
         val response = makeApiRequest(requestURL)
-
         return mapper.parseTeamComposition(response)
+    }
+
+    fun getTeamName(teamName: String): String {
+        val requestURL = "v4/teams/$teamName/"
+        val response = makeApiRequest(requestURL)
+        return mapper.parseTeamName(response)
     }
 
     fun getScheduledMatches(teamName: String): List<Match> {

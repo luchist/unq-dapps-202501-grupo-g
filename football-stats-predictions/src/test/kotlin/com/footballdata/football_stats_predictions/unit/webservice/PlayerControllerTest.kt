@@ -1,6 +1,6 @@
 package com.footballdata.football_stats_predictions.unit.webservice
 
-import com.footballdata.football_stats_predictions.model.PlayerStats
+import com.footballdata.football_stats_predictions.model.PlayerStatsBuilder
 import com.footballdata.football_stats_predictions.service.PlayerService
 import com.footballdata.football_stats_predictions.webservice.PlayerController
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -25,22 +25,24 @@ class PlayerControllerTest {
     fun `getPlayerStats should return player statistics`() {
         // Arrange
         val playerName = "Lionel Messi"
-        val expectedStats = PlayerStats(
-            mapOf(
-                "Campeonato" to 0.0,
-                "Jgdos" to 35.0,
-                "Mins" to 1842.0,
-                "Goles" to 20.0,
-                "Asist" to 6.0,
-                "Amar" to 4.0,
-                "Roja" to 0.0,
-                "TpP" to 4.2,
-                "AP%" to 84.1,
-                "Aéreos" to 0.1,
-                "JdelP" to 9.0,
-                "Rating" to 7.93
+        val expectedStats = PlayerStatsBuilder()
+            .withPlayerName(playerName)
+            .withData(
+                mapOf(
+                    "Jgdos" to 35.0,
+                    "Mins" to 1842.0,
+                    "Goles" to 20.0,
+                    "Asist" to 6.0,
+                    "Amar" to 4.0,
+                    "Roja" to 0.0,
+                    "TpP" to 4.2,
+                    "AP%" to 84.1,
+                    "Aéreos" to 0.1,
+                    "JdelP" to 9.0,
+                    "Rating" to 7.93
+                )
             )
-        )
+            .build()
         `when`(playerService.getPlayerStats(playerName)).thenReturn(expectedStats)
 
         // Act
@@ -55,7 +57,10 @@ class PlayerControllerTest {
     fun `getPlayerStats should return empty map for unknown player`() {
         // Arrange
         val playerName = "Unknown Player"
-        val emptyStats = PlayerStats(emptyMap())
+        val emptyStats = PlayerStatsBuilder()
+            .withPlayerName(playerName)
+            .withData(emptyMap())
+            .build()
         `when`(playerService.getPlayerStats(playerName)).thenReturn(emptyStats)
 
         // Act

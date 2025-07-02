@@ -5,7 +5,6 @@ import jakarta.persistence.*
 @Entity
 class Team(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
     val teamName: String,
 

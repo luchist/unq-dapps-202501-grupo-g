@@ -1,6 +1,7 @@
 package com.footballdata.football_stats_predictions.data
 
 import com.footballdata.football_stats_predictions.model.PlayerStats
+import com.footballdata.football_stats_predictions.model.PlayerStatsBuilder
 import com.footballdata.football_stats_predictions.service.StatsAnalyzerService
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
@@ -26,7 +27,10 @@ class PlayerScraper(
             val headers = extractPlayerStatHeaders(driver)
             val values = extractPlayerStatValues(driver)
             val statsMap = zipHeadersWithValues(headers, values)
-            PlayerStats(statsMap)
+            PlayerStatsBuilder()
+                .withPlayerName(playerName)
+                .withData(statsMap)
+                .build()
         }
     }
 
@@ -77,7 +81,10 @@ class PlayerScraper(
             // Convert sums to averages where applicable
             val finalStats = statsAnalyzerService.calculateStatsAverages(stats, counts, headers, tppIndex)
 
-            PlayerStats(finalStats)
+            PlayerStatsBuilder()
+                .withPlayerName(playerName)
+                .withData(finalStats)
+                .build()
         }
     }
 

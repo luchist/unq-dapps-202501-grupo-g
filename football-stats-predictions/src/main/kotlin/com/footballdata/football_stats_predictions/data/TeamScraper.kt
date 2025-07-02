@@ -2,6 +2,7 @@ package com.footballdata.football_stats_predictions.data
 
 import com.footballdata.football_stats_predictions.model.ResultType
 import com.footballdata.football_stats_predictions.model.TeamStats
+import com.footballdata.football_stats_predictions.model.TeamStatsBuilder
 import com.footballdata.football_stats_predictions.service.StatsAnalyzerService
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
@@ -33,7 +34,10 @@ class TeamScraper(
             val headerValuePairs = zipHeadersWithValues(headerElements, valueElements)
             val statsMap = statsAnalyzerService.buildTeamStatsMap(headerValuePairs)
 
-            TeamStats(statsMap)
+            TeamStatsBuilder()
+                .withTeamName(teamName)
+                .withData(statsMap)
+                .build()
         }
     }
 
@@ -87,7 +91,10 @@ class TeamScraper(
                 val advancedStats = statsAnalyzerService.getTeamGoalsAndShotEffectiveness(stats)
                 val results = scrapeMatchResults(teamName)
 
-                TeamStats(stats.data + advancedStats.data + results.data)
+                TeamStatsBuilder()
+                    .withTeamName(teamName)
+                    .withData(stats.data + advancedStats.data + results.data)
+                    .build()
             }
 
     /**

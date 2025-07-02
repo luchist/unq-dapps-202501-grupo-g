@@ -2,12 +2,9 @@ package com.footballdata.football_stats_predictions.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
 import com.footballdata.football_stats_predictions.data.TeamScraper
-import com.footballdata.football_stats_predictions.model.Match
-import com.footballdata.football_stats_predictions.model.Player
-import com.footballdata.football_stats_predictions.model.TeamBuilder
-import com.footballdata.football_stats_predictions.model.TeamStats
-import com.footballdata.football_stats_predictions.repositories.PlayerRepository
-import com.footballdata.football_stats_predictions.repositories.TeamRepository
+import com.footballdata.football_stats_predictions.model.*
+import com.footballdata.football_stats_predictions.repositories.*
+import com.footballdata.football_stats_predictions.utils.PersistenceHelper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,6 +16,10 @@ class TeamService(
     @field:Autowired var teamScraper: TeamScraper,
     @field:Autowired var playerRepository: PlayerRepository,
     @field:Autowired var teamRepository: TeamRepository,
+    @field:Autowired var teamStatsRepository: TeamStatsRepository,
+    @field:Autowired var comparisonRepository: ComparisonRepository,
+    @field:Autowired var matchPredictionRepository: MatchPredictionRepository,
+    @field:Autowired private val persistenceHelper: PersistenceHelper,
 ) {
 
     fun getTeamComposition(teamName: String): List<Player> {
@@ -30,12 +31,14 @@ class TeamService(
             return cachedTeam.players.toList()
         }
 
-        // If the team does not exist, fetch the players from the API
+        // If the team does not exist, fetch the players and team name from the API
         val teamComposition = footballDataAPI.getTeamComposition(teamName)
+        val teamNameStr = footballDataAPI.getTeamName(teamName)
 
         // Save the team to the database
         val team = TeamBuilder()
-            .withTeamName(teamName)
+            .withId(teamName.toLong())
+            .withTeamName(teamNameStr)
             .withPlayers(teamComposition.toMutableList())
             .build()
         teamRepository.save(team)
@@ -56,18 +59,70 @@ class TeamService(
     }
 
     fun getTeamStatistics(teamName: String): TeamStats {
-        return teamScraper.getTeamData(teamName)
+        return persistenceHelper.getCachedOrFetch(
+            repository = teamStatsRepository,
+            findFunction = { teamStatsRepository.findByTeamName(teamName) },
+            fetchFunction = { teamScraper.getTeamData(teamName) },
+            entityMapper = { stats ->
+                TeamStatsBuilder()
+                    .withTeamName(teamName)
+                    .withData((stats as TeamStats).data)
+                    .build()
+            }
+        )
     }
 
     fun getTeamAdvancedStatistics(teamName: String): TeamStats {
-        return teamScraper.getTeamAdvancedStatistics(teamName)
+        val advancedTeamName = "advanced_$teamName"
+        return persistenceHelper.getCachedOrFetch(
+            repository = teamStatsRepository,
+            findFunction = { teamStatsRepository.findByTeamName(advancedTeamName) },
+            fetchFunction = { teamScraper.getTeamAdvancedStatistics(teamName) },
+            entityMapper = { stats ->
+                TeamStatsBuilder()
+                    .withTeamName(advancedTeamName)
+                    .withData((stats as TeamStats).data)
+                    .build()
+            }
+        )
     }
 
     fun predictMatchProbabilities(localTeam: String, awayTeam: String): Map<String, Double> {
-        return teamScraper.predictMatchProbabilities(localTeam, awayTeam)
+        val prediction = persistenceHelper.getCachedOrFetch(
+            repository = matchPredictionRepository,
+            findFunction = { matchPredictionRepository.findByLocalTeamAndAwayTeam(localTeam, awayTeam) },
+            fetchFunction = { teamScraper.predictMatchProbabilities(localTeam, awayTeam) },
+            entityMapper = { predictions ->
+                @Suppress("UNCHECKED_CAST")
+                MatchPrediction(
+                    localTeam = localTeam,
+                    awayTeam = awayTeam,
+                    predictions = predictions as Map<String, Double>
+                )
+            }
+        )
+        return prediction.predictions
     }
 
     fun compareTeams(localTeam: String, awayTeam: String): Map<String, Map<String, String>> {
-        return teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam)
+        val comparison = persistenceHelper.getCachedOrFetch(
+            repository = comparisonRepository,
+            findFunction = {
+                comparisonRepository.findByComparisonTypeAndEntity1NameAndEntity2Name(
+                    ComparisonType.TEAM, localTeam, awayTeam
+                )
+            },
+            fetchFunction = { teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam) },
+            entityMapper = { comparisonData ->
+                @Suppress("UNCHECKED_CAST")
+                Comparison(
+                    comparisonType = ComparisonType.TEAM,
+                    entity1Name = localTeam,
+                    entity2Name = awayTeam,
+                    comparisonData = comparisonData as Map<String, Map<String, String>>
+                )
+            }
+        )
+        return comparison.comparisonData
     }
 }
