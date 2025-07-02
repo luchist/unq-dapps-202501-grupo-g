@@ -35,7 +35,7 @@ class TeamController(
     )
     @GetMapping("/{teamName}")
     @LogFunctionCall
-    @Queryable(includeParams = ["teamName"]) // Aspect will automatically handle query history
+    @Queryable(includeParams = ["teamName"])
     fun getTeamComposition(
         @Parameter(
             description = "The team name that needs to be fetched",
@@ -73,7 +73,7 @@ class TeamController(
     )
     @GetMapping("/{teamName}/matches")
     @LogFunctionCall
-    @Queryable(includeParams = ["teamName"]) // Aspect automatically captures teamName parameter
+    @Queryable(includeParams = ["teamName"])
     fun getScheduledMatches(
         @Parameter(
             description = "The team name for which scheduled matches are needed",
@@ -112,7 +112,7 @@ class TeamController(
     )
     @GetMapping("/stats/{teamName}")
     @LogFunctionCall
-    @Queryable // Default behavior: captures all @PathVariable and @RequestParam
+    @Queryable
     fun getTeamStats(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamStatistics(teamName)
     }
@@ -130,7 +130,7 @@ class TeamController(
     )
     @GetMapping("/advanced/{teamName}")
     @LogFunctionCall
-    @Queryable // Captures teamName automatically
+    @Queryable
     fun getTeamAdvancedStatistics(@PathVariable teamName: String): TeamStats {
         return teamService.getTeamAdvancedStatistics(teamName)
     }
@@ -145,7 +145,7 @@ class TeamController(
     )
     @GetMapping("/predict/{localTeam}/{awayTeam}")
     @LogFunctionCall
-    @Queryable(includeParams = ["localTeam", "awayTeam"]) // Explicitly specify both parameters
+    @Queryable(includeParams = ["localTeam", "awayTeam"])
     fun predictMatchProbabilities(
         @PathVariable localTeam: String,
         @PathVariable awayTeam: String
@@ -163,7 +163,7 @@ class TeamController(
     )
     @GetMapping("/compare/{localTeam}/{awayTeam}")
     @LogFunctionCall
-    @Queryable(includeParams = ["localTeam", "awayTeam"]) // Captures both team parameters
+    @Queryable(includeParams = ["localTeam", "awayTeam"])
     fun compareTeams(
         @PathVariable localTeam: String,
         @PathVariable awayTeam: String
