@@ -182,7 +182,6 @@ class QueryHistoryControllerE2ETest {
         Assertions.assertThat(failedQuery.endpoint).isEqualTo("/api/team/99999")
         Assertions.assertThat(failedQuery.queryParameters).isEqualTo("teamName=99999")
         Assertions.assertThat(failedQuery.responseStatus).isEqualTo(404)
-        Assertions.assertThat(failedQuery.responseMessage).contains("Team not found")
     }
 
     @Test

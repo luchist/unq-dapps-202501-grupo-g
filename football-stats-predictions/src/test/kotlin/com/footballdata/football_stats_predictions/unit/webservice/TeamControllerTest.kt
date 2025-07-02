@@ -35,7 +35,6 @@ class TeamControllerTest {
         val teamName = "Barcelona"
 
         val authentication: Authentication = Mockito.mock(Authentication::class.java)
-        `when`(authentication.name).thenReturn("123")
 
         val expectedPlayers = listOf(
             Player(
@@ -65,7 +64,6 @@ class TeamControllerTest {
             .thenThrow(RuntimeException("Service error"))
 
         val authentication: Authentication = Mockito.mock(Authentication::class.java)
-        `when`(authentication.name).thenReturn("123")
 
         // Act
         val result = teamController.getTeamComposition(teamName, authentication)
@@ -93,7 +91,6 @@ class TeamControllerTest {
         `when`(teamService.getScheduledMatches(teamName)).thenReturn(expectedMatches)
 
         val authentication: Authentication = Mockito.mock(Authentication::class.java)
-        `when`(authentication.name).thenReturn("123")
 
         // Act
         val result = teamController.getScheduledMatches(teamName, authentication)
@@ -111,7 +108,6 @@ class TeamControllerTest {
         `when`(teamService.getScheduledMatches(teamName)).thenReturn(expectedMatches)
 
         val authentication: Authentication = Mockito.mock(Authentication::class.java)
-        `when`(authentication.name).thenReturn("123")
 
         // Act
         val result = teamController.getScheduledMatches(teamName, authentication)
@@ -153,13 +149,15 @@ class TeamControllerTest {
     fun `getTeamAdvancedStatistics should return advanced team statistics`() {
         // Arrange
         val teamName = "Barcelona"
-        val expectedAdvancedStats = TeamStats(mapOf(
-            "Goles por Partido" to 1.3846153846153846,
-            "Efectividad de Tiros" to 13.505555555555555,
-            "Ganados" to 25.0,
-            "Empatados" to 12.0,
-            "Perdidos" to 13.0
-        ))
+        val expectedAdvancedStats = TeamStats(
+            mapOf(
+                "Goles por Partido" to 1.3846153846153846,
+                "Efectividad de Tiros" to 13.505555555555555,
+                "Ganados" to 25.0,
+                "Empatados" to 12.0,
+                "Perdidos" to 13.0
+            )
+        )
 
         `when`(teamService.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
 

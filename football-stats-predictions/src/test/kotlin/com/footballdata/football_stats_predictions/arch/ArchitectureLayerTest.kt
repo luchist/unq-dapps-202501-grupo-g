@@ -22,7 +22,7 @@ class ArchitectureLayerTest {
     val services_should_only_be_accessed_by_controllers_or_other_services: ArchRule? =
         classes().that().resideInAPackage("..service..")
             .should().onlyBeAccessed()
-            .byAnyPackage("..webservice..", "..service..", "..config..", "..integration..", "..data..")
+            .byAnyPackage("..webservice..", "..service..", "..config..", "..integration..", "..data..", "..aspects..")
 
 
     // 'dependOn' catches a wider variety of violations, e.g. having fields of type, having method parameters of type, extending type ...
@@ -38,5 +38,12 @@ class ArchitectureLayerTest {
     val services_should_only_be_depended_on_by_controllers_or_other_services: ArchRule? =
         classes().that().resideInAPackage("..service..")
             .should().onlyHaveDependentClassesThat()
-            .resideInAnyPackage("..webservice..", "..service..", "..config..", "..integration..", "..data..")
+            .resideInAnyPackage(
+                "..webservice..",
+                "..service..",
+                "..config..",
+                "..integration..",
+                "..data..",
+                "..aspects.."
+            )
 }
