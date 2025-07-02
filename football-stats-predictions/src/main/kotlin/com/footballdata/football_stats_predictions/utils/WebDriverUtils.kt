@@ -71,6 +71,19 @@ object WebDriverUtils {
         }
     }
 
+    fun testDriverConnection(): Result<Boolean> {
+        return runCatching {
+            createDriver().use { driver ->
+                try {
+                    driver.get("https://www.google.com")
+                    true
+                } catch (e: Exception) {
+                    false
+                }
+            }
+        }
+    }
+
     /**
      * Accepts cookies on the current page if the accept cookies button appears.
      * Uses a functional approach with explicit error handling.
