@@ -2,10 +2,7 @@ package com.footballdata.football_stats_predictions.unit.service
 
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
 import com.footballdata.football_stats_predictions.data.TeamScraper
-import com.footballdata.football_stats_predictions.model.Match
-import com.footballdata.football_stats_predictions.model.PlayerBuilder
-import com.footballdata.football_stats_predictions.model.Team
-import com.footballdata.football_stats_predictions.model.TeamStatsBuilder
+import com.footballdata.football_stats_predictions.model.*
 import com.footballdata.football_stats_predictions.repositories.*
 import com.footballdata.football_stats_predictions.service.TeamService
 import com.footballdata.football_stats_predictions.utils.PersistenceHelper
@@ -17,10 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.any
-import org.mockito.kotlin.never
-import org.mockito.kotlin.times
-import org.mockito.kotlin.verify
+import org.mockito.kotlin.*
 
 @ExtendWith(MockitoExtension::class)
 class TeamServiceTest {
@@ -88,46 +82,57 @@ class TeamServiceTest {
     @Test
     fun `should fetch from API and save when team does not exist`() {
         // Arrange
+        val teamId = "86"
         val teamName = "Barcelona"
         val expectedApiPlayers = listOf(
-            PlayerBuilder().withPlayerName("Jugador3").build(),
-            PlayerBuilder().withPlayerName("Jugador4").build()
+            PlayerBuilder().withPlayerName("Jugador1").build(),
+            PlayerBuilder().withPlayerName("Jugador2").build()
         )
 
-        `when`(teamRepository.findByTeamName(teamName)).thenReturn(null)
-        `when`(footballDataAPI.getTeamComposition(teamName)).thenReturn(expectedApiPlayers)
-        `when`(playerRepository.findByPlayerName(any())).thenReturn(null)
+        `when`(teamRepository.findByTeamName(eq(teamId))).thenReturn(null)
+        `when`(footballDataAPI.getTeamComposition(eq(teamId))).thenReturn(expectedApiPlayers)
+        `when`(footballDataAPI.getTeamName(eq(teamId))).thenReturn(teamName)
+        `when`(teamRepository.save(any())).thenAnswer { it.getArgument(0) }
 
         // Act
-        val result = teamService.getTeamComposition(teamName)
+        val result = teamService.getTeamComposition(teamId)
 
         // Assert
         assertEquals(expectedApiPlayers, result)
-        verify(teamRepository, times(1)).findByTeamName(teamName)
-        verify(footballDataAPI, times(1)).getTeamComposition(teamName)
+        verify(teamRepository, times(1)).findByTeamName(eq(teamId))
+        verify(footballDataAPI, times(1)).getTeamComposition(eq(teamId))
+        verify(footballDataAPI, times(1)).getTeamName(eq(teamId))
         verify(teamRepository, times(1)).save(any())
+        verify(playerRepository, times(2)).findByPlayerName(any())
         verify(playerRepository, times(2)).save(any())
     }
 
     @Test
     fun `should not save existing players when fetching from API`() {
         // Arrange
+        val teamId = "86"
         val teamName = "Barcelona"
-        val existingPlayer = PlayerBuilder()
-            .withPlayerName("Jugador3")
-            .withPosition("Forward")
-            .build()
-        val apiPlayers = listOf(existingPlayer)
+        val existingPlayer = PlayerBuilder().withPlayerName("Jugador3").build()
+        val newPlayer = PlayerBuilder().withPlayerName("Jugador4").build()
+        val expectedApiPlayers = listOf(existingPlayer, newPlayer)
 
-        `when`(teamRepository.findByTeamName(teamName)).thenReturn(null)
-        `when`(footballDataAPI.getTeamComposition(teamName)).thenReturn(apiPlayers)
-        `when`(playerRepository.findByPlayerName("Jugador3")).thenReturn(existingPlayer)
+        `when`(teamRepository.findByTeamName(eq(teamId))).thenReturn(null)
+        `when`(footballDataAPI.getTeamComposition(eq(teamId))).thenReturn(expectedApiPlayers)
+        `when`(footballDataAPI.getTeamName(eq(teamId))).thenReturn(teamName)
+        `when`(playerRepository.findByPlayerName(eq(existingPlayer.playerName))).thenReturn(existingPlayer)
+        `when`(playerRepository.findByPlayerName(eq(newPlayer.playerName))).thenReturn(null)
 
         // Act
-        teamService.getTeamComposition(teamName)
+        val result = teamService.getTeamComposition(teamId)
 
         // Assert
-        verify(playerRepository, never()).save(existingPlayer)
+        assert(result == expectedApiPlayers)
+        verify(teamRepository, times(1)).findByTeamName(eq(teamId))
+        verify(footballDataAPI, times(1)).getTeamComposition(eq(teamId))
+        verify(footballDataAPI, times(1)).getTeamName(eq(teamId))
+        verify(teamRepository, times(1)).save(any<Team>())
+        verify(playerRepository, times(1)).save(any<Player>())
+        verify(playerRepository, times(2)).findByPlayerName(any())
     }
 
     @Test
@@ -199,6 +204,7 @@ class TeamServiceTest {
         // Arrange
         val teamName = "Barcelona"
         val expectedStats = TeamStatsBuilder()
+            .withTeamName(teamName)
             .withData(mapOf(
                 "Apps" to 25.0,
                 "Goles" to 47.0,
@@ -212,69 +218,115 @@ class TeamServiceTest {
             ))
             .build()
 
-        `when`(teamScraper.getTeamData(teamName)).thenReturn(expectedStats)
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(teamStatsRepository),
+            any<() -> TeamStats?>(),
+            any<() -> Any>(),
+            any<(Any) -> TeamStats>()
+        )).thenReturn(expectedStats)
 
         // Act
         val result = teamService.getTeamStatistics(teamName)
 
         // Assert
-        assertEquals(expectedStats, result)
-        verify(teamScraper, times(1)).getTeamData(teamName)
+        assert(result == expectedStats)
+        verify(persistenceHelper, times(1)).getCachedOrFetch(
+            eq(teamStatsRepository),
+            any<() -> TeamStats?>(),
+            any<() -> Any>(),
+            any<(Any) -> TeamStats>()
+        )
     }
 
     @Test
     fun `should return empty map when no team statistics available`() {
         // Arrange
-        val teamName = "UnknownTeam"
+        val teamName = "Unknown Team"
         val emptyStats = TeamStatsBuilder()
+            .withTeamName(teamName)
             .withData(emptyMap())
             .build()
 
-        `when`(teamScraper.getTeamData(teamName)).thenReturn(emptyStats)
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(teamStatsRepository),
+            any(),
+            any(),
+            any()
+        )).thenReturn(emptyStats)
 
         // Act
         val result = teamService.getTeamStatistics(teamName)
 
         // Assert
         assert(result.isEmpty())
-        verify(teamScraper, times(1)).getTeamData(teamName)
+
+        verify(persistenceHelper, times(1)).getCachedOrFetch(
+            eq(teamStatsRepository),
+            any(),
+            any(),
+            any()
+        )
     }
 
     @Test
     fun `should return advanced team statistics from scraping service`() {
         // Arrange
         val teamName = "Real Madrid"
+        val advancedTeamName = "advanced_$teamName"
         val expectedAdvancedStats = TeamStatsBuilder()
+            .withTeamName(advancedTeamName)
             .withData(mapOf(
-                "Goles por Partido" to 2.19,
-                "Efectividad de Tiros" to 7.35,
-                "Ganados" to 42.0,
-                "Empatados" to 8.0,
-                "Perdidos" to 13.0
+                "Goals per game" to 2.19,
+                "Shot Effectiveness" to 7.35,
+                "Wins" to 42.0,
+                "Draws" to 8.0,
+                "Losses" to 13.0
             ))
             .build()
 
-        `when`(teamScraper.getTeamAdvancedStatistics(teamName)).thenReturn(expectedAdvancedStats)
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(teamStatsRepository),
+            any<() -> TeamStats?>(),
+            any<() -> Any>(),
+            any<(Any) -> TeamStats>()
+        )).thenReturn(expectedAdvancedStats)
 
         // Act
         val result = teamService.getTeamAdvancedStatistics(teamName)
 
         // Assert
-        assertEquals(expectedAdvancedStats, result)
-        verify(teamScraper, times(1)).getTeamAdvancedStatistics(teamName)
+        assert(result == expectedAdvancedStats)
+        verify(persistenceHelper, times(1)).getCachedOrFetch(
+            eq(teamStatsRepository),
+            any<() -> TeamStats?>(),
+            any<() -> Any>(),
+            any<(Any) -> TeamStats>()
+        )
     }
 
     @Test
     fun `should propagate exception when scraping fails for advanced statistics`() {
         // Arrange
         val teamName = "Barcelona"
-        `when`(teamScraper.getTeamAdvancedStatistics(teamName))
-            .thenThrow(RuntimeException("Scraping Error"))
+
+        `when`(teamScraper.getTeamAdvancedStatistics(eq(teamName)))
+            .thenThrow(RuntimeException("Error getting advanced statistics"))
+
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(teamStatsRepository),
+            any(),
+            any<() -> Any>(),
+            any()
+        )).thenAnswer { invocation ->
+            val fetchFunction = invocation.getArgument<() -> Any>(2)
+            fetchFunction.invoke()
+        }
 
         // Act & Assert
         assertThrows<RuntimeException> {
             teamService.getTeamAdvancedStatistics(teamName)
         }
+
         verify(teamScraper, times(1)).getTeamAdvancedStatistics(teamName)
     }
 
@@ -288,16 +340,30 @@ class TeamServiceTest {
             "Draw" to 28.5,
             "Visiting Win" to 26.3
         )
+        val prediction = MatchPrediction(
+            localTeam = localTeam,
+            awayTeam = awayTeam,
+            predictions = expectedProbabilities
+        )
 
-        `when`(teamScraper.predictMatchProbabilities(localTeam, awayTeam))
-            .thenReturn(expectedProbabilities)
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(matchPredictionRepository),
+            any<() -> MatchPrediction?>(),
+            any<() -> Any>(),
+            any<(Any) -> MatchPrediction>()
+        )).thenReturn(prediction)
 
         // Act
         val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
-        assertEquals(expectedProbabilities, result)
-        verify(teamScraper, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+        assert(result == expectedProbabilities)
+        verify(persistenceHelper, times(1)).getCachedOrFetch(
+            eq(matchPredictionRepository),
+            any<() -> MatchPrediction?>(),
+            any<() -> Any>(),
+            any<(Any) -> MatchPrediction>()
+        )
     }
 
     @Test
@@ -310,16 +376,30 @@ class TeamServiceTest {
             "Draw" to 33.4,
             "Visiting Win" to 33.3
         )
+        val prediction = MatchPrediction(
+            localTeam = localTeam,
+            awayTeam = awayTeam,
+            predictions = expectedEqualProbabilities
+        )
 
-        `when`(teamScraper.predictMatchProbabilities(localTeam, awayTeam))
-            .thenReturn(expectedEqualProbabilities)
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(matchPredictionRepository),
+            any<() -> MatchPrediction?>(),
+            any<() -> Any>(),
+            any<(Any) -> MatchPrediction>()
+        )).thenReturn(prediction)
 
         // Act
         val result = teamService.predictMatchProbabilities(localTeam, awayTeam)
 
         // Assert
-        assertEquals(expectedEqualProbabilities, result)
-        verify(teamScraper, times(1)).predictMatchProbabilities(localTeam, awayTeam)
+        assert(result == expectedEqualProbabilities)
+        verify(persistenceHelper, times(1)).getCachedOrFetch(
+            eq(matchPredictionRepository),
+            any<() -> MatchPrediction?>(),
+            any<() -> Any>(),
+            any<(Any) -> MatchPrediction>()
+        )
     }
 
     @Test
@@ -331,36 +411,39 @@ class TeamServiceTest {
             "barcelona" to mapOf(
                 "Apps" to "60.0 (-3.00)",
                 "Goles" to "174.0 (36.00)",
-                "Tiros pp" to "17.3 (1.20)",
-                "Yellow Cards" to "89.0 (-22.00)",
-                "Red Cards" to "6.0 (-3.00)",
-                "Posesion%" to "67.4 (9.10)",
-                "AciertoPase%" to "88.4 (-1.40)",
-                "Aéreos" to "10.1 (1.80)",
                 "Rating" to "6.86 (0.02)"
             ),
             "real madrid" to mapOf(
                 "Apps" to "63.0 (3.00)",
                 "Goles" to "138.0 (-36.00)",
-                "Tiros pp" to "16.1 (-1.20)",
-                "Yellow Cards" to "111.0 (22.00)",
-                "Red Cards" to "9.0 (3.00)",
-                "Posesion%" to "58.3 (-9.10)",
-                "AciertoPase%" to "89.8 (1.40)",
-                "Aéreos" to "8.3 (-1.80)",
                 "Rating" to "6.84 (-0.02)"
             )
         )
+        val comparison = Comparison(
+            comparisonType = ComparisonType.TEAM,
+            entity1Name = localTeam,
+            entity2Name = awayTeam,
+            comparisonData = expectedComparison
+        )
 
-        `when`(teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam))
-            .thenReturn(expectedComparison)
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(comparisonRepository),
+            any<() -> Comparison?>(),
+            any<() -> Any>(),
+            any<(Any) -> Comparison>()
+        )).thenReturn(comparison)
 
         // Act
         val result = teamService.compareTeams(localTeam, awayTeam)
 
         // Assert
-        assertEquals(expectedComparison, result)
-        verify(teamScraper, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
+        assert(result == expectedComparison)
+        verify(persistenceHelper, times(1)).getCachedOrFetch(
+            eq(comparisonRepository),
+            any<() -> Comparison?>(),
+            any<() -> Any>(),
+            any<(Any) -> Comparison>()
+        )
     }
 
     @Test
@@ -369,16 +452,31 @@ class TeamServiceTest {
         val localTeam = "UnknownTeam1"
         val awayTeam = "UnknownTeam2"
         val emptyComparison = emptyMap<String, Map<String, String>>()
+        val comparison = Comparison(
+            comparisonType = ComparisonType.TEAM,
+            entity1Name = localTeam,
+            entity2Name = awayTeam,
+            comparisonData = emptyComparison
+        )
 
-        `when`(teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam))
-            .thenReturn(emptyComparison)
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(comparisonRepository),
+            any<() -> Comparison?>(),
+            any<() -> Any>(),
+            any<(Any) -> Comparison>()
+        )).thenReturn(comparison)
 
         // Act
         val result = teamService.compareTeams(localTeam, awayTeam)
 
         // Assert
         assert(result.isEmpty())
-        verify(teamScraper, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
+        verify(persistenceHelper, times(1)).getCachedOrFetch(
+            eq(comparisonRepository),
+            any<() -> Comparison?>(),
+            any<() -> Any>(),
+            any<(Any) -> Comparison>()
+        )
     }
 
     @Test
@@ -386,13 +484,23 @@ class TeamServiceTest {
         // Arrange
         val localTeam = "Barcelona"
         val awayTeam = "Real Madrid"
-        `when`(teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam))
-            .thenThrow(RuntimeException("Comparison scraping failed"))
+
+        `when`(persistenceHelper.getCachedOrFetch(
+            eq(comparisonRepository),
+            any<() -> Comparison?>(),
+            any<() -> Any>(),
+            any<(Any) -> Comparison>()
+        )).thenThrow(RuntimeException("Comparison scraping failed"))
 
         // Act & Assert
         assertThrows<RuntimeException> {
             teamService.compareTeams(localTeam, awayTeam)
         }
-        verify(teamScraper, times(1)).compareTeamStatsWithDiff(localTeam, awayTeam)
+        verify(persistenceHelper, times(1)).getCachedOrFetch(
+            eq(comparisonRepository),
+            any<() -> Comparison?>(),
+            any<() -> Any>(),
+            any<(Any) -> Comparison>()
+        )
     }
 }
