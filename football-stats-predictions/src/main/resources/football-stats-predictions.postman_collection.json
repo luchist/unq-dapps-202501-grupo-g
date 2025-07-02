@@ -1,0 +1,1011 @@
+{
+	"info": {
+		"_postman_id": "b8f05d38-c354-482f-883c-cd6f2732a623",
+		"name": "football-stats-predictions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Auth Request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response contains a well formed accessToken\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    var token = jsonData.accessToken;\r",
+									"    \r",
+									"    pm.expect(token, \"accessToken should exist\").to.exist;\r",
+									"    pm.expect(token, \"accessToken should not be null and not be undefined\").to.not.be.null.and.not.be.undefined;\r",
+									"    pm.expect(token, \"accessToken should be a non-empty string\").to.be.a('string').with.length.above(0);\r",
+									"    pm.expect(token, \"accessToken should match JWT format\").to.match(/^ey[A-Za-z0-9\\-_]+/);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains a well formed refreshToken\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    var token = jsonData.refreshToken;\r",
+									"    \r",
+									"    pm.expect(token, \"refreshToken should exist\").to.exist;\r",
+									"    pm.expect(token, \"refreshToken should not be null and not be undefined\").to.not.be.null.and.not.be.undefined;\r",
+									"    pm.expect(token, \"refreshToken should be a non-empty string\").to.be.a('string').with.length.above(0);\r",
+									"    pm.expect(token, \"refreshToken should match JWT format\").to.match(/^ey[A-Za-z0-9\\-_]+/);\r",
+									"});\r",
+									"\r",
+									"// Set access_token collection variable\r",
+									"pm.test(\"Set access_token collection variable\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.accessToken);\r",
+									"    console.log(\">Access token saved:\", jsonData.accessToken);\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{test_username}}\",\r\n    \"password\": \"{{test_password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth Register",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{register_username}}\",\r\n    \"password\": \"{{register_password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Content-Type header is application/json\", function () {",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Basic Tests",
+			"item": [
+				{
+					"name": "Hello",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/hello",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"hello"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Swagger UI",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/swagger-ui/index.html",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"swagger-ui",
+								"index.html"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Player",
+			"item": [
+				{
+					"name": "[Scrapper] Get Player Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response has correct structure and data types\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    // Required fields are present\r",
+									"    pm.expect(responseJson).to.have.property('Jgdos');\r",
+									"    pm.expect(responseJson).to.have.property('Mins');\r",
+									"    pm.expect(responseJson).to.have.property('Goles');\r",
+									"    pm.expect(responseJson).to.have.property('Asist');\r",
+									"    pm.expect(responseJson).to.have.property('Amar');\r",
+									"    pm.expect(responseJson).to.have.property('Roja');\r",
+									"    pm.expect(responseJson).to.have.property('TpP');\r",
+									"    pm.expect(responseJson).to.have.property('AP%');\r",
+									"    pm.expect(responseJson).to.have.property('Aéreos');\r",
+									"    pm.expect(responseJson).to.have.property('JdelP');\r",
+									"    pm.expect(responseJson).to.have.property('Rating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All fields are numbers\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    pm.expect(responseJson.Jgdos).to.be.a('number');\r",
+									"    pm.expect(responseJson.Mins).to.be.a('number');\r",
+									"    pm.expect(responseJson.Goles).to.be.a('number');\r",
+									"    pm.expect(responseJson.Asist).to.be.a('number');\r",
+									"    pm.expect(responseJson.Amar).to.be.a('number');\r",
+									"    pm.expect(responseJson.Roja).to.be.a('number');\r",
+									"    pm.expect(responseJson.TpP).to.be.a('number');\r",
+									"    pm.expect(responseJson['AP%']).to.be.a('number');\r",
+									"    pm.expect(responseJson.Aéreos).to.be.a('number');\r",
+									"    pm.expect(responseJson.JdelP).to.be.a('number');\r",
+									"    pm.expect(responseJson.Rating).to.be.a('number');\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/player/Lionel%20Messi",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"player",
+								"Lionel%20Messi"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Scrapper] Get Player Rating",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Rating is a valid number\", function () {\r",
+									"    const responseBody = pm.response.text();\r",
+									"    const rating = parseFloat(responseBody);\r",
+									"    \r",
+									"    pm.expect(rating).to.not.be.NaN;\r",
+									"    pm.expect(typeof rating).to.equal('number');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Rating is a positive value\", function () {\r",
+									"    const responseBody = pm.response.text();\r",
+									"    const rating = parseFloat(responseBody);\r",
+									"    \r",
+									"    pm.expect(rating).to.be.above(0);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/player/Lionel%20Messi/rating",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"player",
+								"Lionel%20Messi",
+								"rating"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Scrapper] Get Player Comparison",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response has correct structure with Current and comparison year\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const keys = Object.keys(responseJson);\r",
+									"    \r",
+									"    // Current and year keys\r",
+									"    pm.expect(keys).to.have.lengthOf(2);\r",
+									"    \r",
+									"\r",
+									"    pm.expect(responseJson).to.have.property('Current');\r",
+									"    \r",
+									"    // Find year keys\r",
+									"    const yearKey = keys.find(key => key !== 'Current');\r",
+									"    pm.expect(yearKey).to.exist;\r",
+									"    pm.expect(yearKey).to.match(/^\\d{4}$/, 'Year should be a 4-digit number');\r",
+									"    \r",
+									"    // Current and Year have same keys\r",
+									"    const currentKeys = Object.keys(responseJson.Current);\r",
+									"    const comparisonKeys = Object.keys(responseJson[yearKey]);\r",
+									"    \r",
+									"    pm.expect(currentKeys).to.deep.equal(comparisonKeys);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/player/Lionel%20Messi/compare/2024",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"player",
+								"Lionel%20Messi",
+								"compare",
+								"2024"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Content-Type header is application/json\", function () {",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Team",
+			"item": [
+				{
+					"name": "[API] Team Composition",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Player data types are correct\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    responseJson.forEach((player, index) => {\r",
+									"        pm.expect(player.id).to.be.a('number', `Player ${index}: id should be number`);\r",
+									"        pm.expect(player.playerName).to.be.a('string', `Player ${index}: playerName should be string`);\r",
+									"        pm.expect(player.position).to.be.a('string', `Player ${index}: position should be string`);\r",
+									"        pm.expect(player.dateOfBirth).to.be.a('string', `Player ${index}: dateOfBirth should be string`);\r",
+									"        pm.expect(player.nationality).to.be.a('string', `Player ${index}: nationality should be string`);\r",
+									"        pm.expect(player.shoots).to.be.a('number', `Player ${index}: shoots should be number`);\r",
+									"        pm.expect(player.interceptions).to.be.a('number', `Player ${index}: interceptions should be number`);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Player IDs are unique\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const ids = responseJson.map(player => player.id);\r",
+									"    const uniqueIds = [...new Set(ids)];\r",
+									"    \r",
+									"    pm.expect(uniqueIds.length).to.equal(ids.length, \"All player IDs should be unique\");\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/team/1769",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"team",
+								"1769"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[API] Team Scheduled Matches",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Match data types are correct\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    responseJson.forEach((match, index) => {\r",
+									"        pm.expect(match.id).to.be.a('number', `Match ${index}: id should be number`);\r",
+									"        pm.expect(match.league).to.be.a('string', `Match ${index}: league should be string`);\r",
+									"        pm.expect(match.date).to.be.a('string', `Match ${index}: date should be string`);\r",
+									"        pm.expect(match.homeTeamId).to.be.a('number', `Match ${index}: homeTeamId should be number`);\r",
+									"        pm.expect(match.homeTeamName).to.be.a('string', `Match ${index}: homeTeamName should be string`);\r",
+									"        pm.expect(match.awayTeamId).to.be.a('number', `Match ${index}: awayTeamId should be number`);\r",
+									"        pm.expect(match.awayTeamName).to.be.a('string', `Match ${index}: awayTeamName should be string`);\r",
+									"    });\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/team/1765/matches",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"team",
+								"1765",
+								"matches"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Scrapper] Get Team Stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Team stats has correct structure and all required fields\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const requiredFields = ['Apps', 'Goles', 'Tiros pp', 'Yellow Cards', 'Red Cards', 'Posesion%', 'AciertoPase%', 'Aéreos', 'Rating'];\r",
+									"    \r",
+									"    requiredFields.forEach(field => {\r",
+									"        pm.expect(responseJson).to.have.property(field);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All stats values are numbers\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    pm.expect(responseJson.Apps).to.be.a('number');\r",
+									"    pm.expect(responseJson.Goles).to.be.a('number');\r",
+									"    pm.expect(responseJson['Tiros pp']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Yellow Cards']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Red Cards']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Posesion%']).to.be.a('number');\r",
+									"    pm.expect(responseJson['AciertoPase%']).to.be.a('number');\r",
+									"    pm.expect(responseJson.Aéreos).to.be.a('number');\r",
+									"    pm.expect(responseJson.Rating).to.be.a('number');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/team/stats/fluminense",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"team",
+								"stats",
+								"fluminense"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Scrapper] Get Advanced Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Advanced team stats has correct structure and all required fields\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const requiredFields = [\r",
+									"        'Apps', 'Goles', 'Tiros pp', 'Yellow Cards', 'Red Cards', \r",
+									"        'Posesion%', 'AciertoPase%', 'Aéreos', 'Rating',\r",
+									"        'Goals per game', 'Shot Effectiveness', 'Wins', 'Draws', 'Losses'\r",
+									"    ];\r",
+									"    \r",
+									"    requiredFields.forEach(field => {\r",
+									"        pm.expect(responseJson).to.have.property(field);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All advanced stats values are numbers\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    pm.expect(responseJson.Apps).to.be.a('number');\r",
+									"    pm.expect(responseJson.Goles).to.be.a('number');\r",
+									"    pm.expect(responseJson['Tiros pp']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Yellow Cards']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Red Cards']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Posesion%']).to.be.a('number');\r",
+									"    pm.expect(responseJson['AciertoPase%']).to.be.a('number');\r",
+									"    pm.expect(responseJson.Aéreos).to.be.a('number');\r",
+									"    pm.expect(responseJson.Rating).to.be.a('number');\r",
+									"    pm.expect(responseJson['Goals per game']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Shot Effectiveness']).to.be.a('number');\r",
+									"    pm.expect(responseJson.Wins).to.be.a('number');\r",
+									"    pm.expect(responseJson.Draws).to.be.a('number');\r",
+									"    pm.expect(responseJson.Losses).to.be.a('number');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/team/advanced/real%20madrid",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"team",
+								"advanced",
+								"real%20madrid"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Scrapper] Get Prediction Match",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Prediction has correct structure and all required fields\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const requiredFields = ['Local Win', 'Draw', 'Visiting Win'];\r",
+									"    \r",
+									"    // Verificar que todos los campos requeridos están presentes\r",
+									"    requiredFields.forEach(field => {\r",
+									"        pm.expect(responseJson).to.have.property(field);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All prediction values are numbers\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    pm.expect(responseJson['Local Win']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Draw']).to.be.a('number');\r",
+									"    pm.expect(responseJson['Visiting Win']).to.be.a('number');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/team/predict/boca%20juniors/bayern%20munich",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"team",
+								"predict",
+								"boca%20juniors",
+								"bayern%20munich"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Scrapper] Get Comparison",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response has correct structure with two team sections\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const keys = Object.keys(responseJson);\r",
+									"    \r",
+									"    // Only 2 teams\r",
+									"    pm.expect(keys).to.have.lengthOf(2);\r",
+									"    \r",
+									"    // Same statistics in the two teams\r",
+									"    const team1Key = keys[0];\r",
+									"    const team2Key = keys[1];\r",
+									"    \r",
+									"    const team1Keys = Object.keys(responseJson[team1Key]);\r",
+									"    const team2Keys = Object.keys(responseJson[team2Key]);\r",
+									"    \r",
+									"    pm.expect(team1Keys).to.have.lengthOf(9);\r",
+									"    pm.expect(team2Keys).to.have.lengthOf(9);\r",
+									"    pm.expect(team1Keys).to.deep.equal(team2Keys);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/team/compare/barcelona/real%20madrid",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"team",
+								"compare",
+								"barcelona",
+								"real%20madrid"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Content-Type header is application/json\", function () {",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Query History",
+			"item": [
+				{
+					"name": "Query History",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Each history record has correct structure and required fields\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const requiredFields = ['id', 'userName', 'endpoint', 'queryParameters', 'timestamp', 'responseStatus', 'responseMessage'];\r",
+									"    \r",
+									"    responseJson.forEach((record, index) => {\r",
+									"        requiredFields.forEach(field => {\r",
+									"            pm.expect(record).to.have.property(field);\r",
+									"        });\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"History record data types are correct\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    responseJson.forEach((record, index) => {\r",
+									"        pm.expect(record.id).to.be.a('number', `Record ${index}: id should be number`);\r",
+									"        pm.expect(record.userName).to.be.a('string', `Record ${index}: userName should be string`);\r",
+									"        pm.expect(record.endpoint).to.be.a('string', `Record ${index}: endpoint should be string`);\r",
+									"        pm.expect(record.queryParameters).to.be.a('string', `Record ${index}: queryParameters should be string`);\r",
+									"        pm.expect(record.timestamp).to.be.a('string', `Record ${index}: timestamp should be string`);\r",
+									"        pm.expect(record.responseStatus).to.be.a('number', `Record ${index}: responseStatus should be number`);\r",
+									"        \r",
+									"        // responseMessage can be null or string\r",
+									"        if (record.responseMessage !== null) {\r",
+									"            pm.expect(record.responseMessage).to.be.a('string', `Record ${index}: responseMessage should be string or null`);\r",
+									"        }\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Record IDs are unique and positive\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    \r",
+									"    if (responseJson.length > 0) {\r",
+									"        const ids = responseJson.map(record => record.id);\r",
+									"        const uniqueIds = [...new Set(ids)];\r",
+									"        \r",
+									"        pm.expect(uniqueIds.length).to.equal(ids.length, \"All record IDs should be unique\");\r",
+									"        \r",
+									"        responseJson.forEach((record, index) => {\r",
+									"            pm.expect(record.id).to.be.above(0, `Record ${index}: ID should be positive`);\r",
+									"            pm.expect(Number.isInteger(record.id)).to.be.true;\r",
+									"        });\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"pm.test(\"User names are valid email format\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\r",
+									"    \r",
+									"    responseJson.forEach((record, index) => {\r",
+									"        pm.expect(record.userName).to.not.be.empty;\r",
+									"        pm.expect(record.userName).to.match(emailPattern, \r",
+									"            `Record ${index}: userName '${record.userName}' should be a valid email`);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Timestamps are valid ISO format\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const isoPattern = /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?$/;\r",
+									"    \r",
+									"    responseJson.forEach((record, index) => {\r",
+									"        pm.expect(record.timestamp).to.match(isoPattern, \r",
+									"            `Record ${index}: Invalid timestamp format '${record.timestamp}'`);\r",
+									"        \r",
+									"        // Verificar que es una fecha válida\r",
+									"        const date = new Date(record.timestamp);\r",
+									"        pm.expect(date.toString()).to.not.equal('Invalid Date', \r",
+									"            `Record ${index}: Timestamp '${record.timestamp}' is not a valid date`);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response status codes are valid HTTP codes\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    const validStatusCodes = [200, 201, 400, 401, 403, 404, 500, 502, 503];\r",
+									"    \r",
+									"    responseJson.forEach((record, index) => {\r",
+									"        pm.expect(record.responseStatus).to.be.a('number');\r",
+									"        pm.expect(record.responseStatus).to.be.at.least(100, \r",
+									"            `Record ${index}: Status code should be at least 100`);\r",
+									"        pm.expect(record.responseStatus).to.be.at.most(599, \r",
+									"            `Record ${index}: Status code should be at most 599`);\r",
+									"    });\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/query-history",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"query-history"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Content-Type header is application/json\", function () {",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+							"});"
+						]
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Response status code is 200\", function () {",
+					"  pm.response.to.have.status(200);",
+					"});",
+					"",
+					"pm.test(\"Response is not empty\", function () {",
+					"    const responseBody = pm.response.text();",
+					"    pm.expect(responseBody).to.not.be.empty;",
+					"    pm.expect(responseBody.trim()).to.not.equal('');",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "base_url",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "test_username",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "test_password",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "register_username",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "register_password",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
