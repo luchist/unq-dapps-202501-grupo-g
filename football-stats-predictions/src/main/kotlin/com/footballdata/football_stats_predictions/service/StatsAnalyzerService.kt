@@ -1,5 +1,6 @@
 package com.footballdata.football_stats_predictions.service
 
+import com.footballdata.football_stats_predictions.model.ResultType
 import com.footballdata.football_stats_predictions.model.Stats
 import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.model.TeamStatsBuilder
@@ -139,9 +140,11 @@ class StatsAnalyzerService() {
      * @param nameEnd Name to identify the ending column
      * @return Pair of indices representing start and end positions
      */
-    fun findColumnIndices(headers: List<String>,
-                          nameStart: String,
-                          nameEnd: String): Pair<Int, Int> {
+    fun findColumnIndices(
+        headers: List<String>,
+        nameStart: String,
+        nameEnd: String
+    ): Pair<Int, Int> {
         val startIndex = headers.indexOfFirst { it.contains(nameStart) }.takeIf { it >= 0 } ?: 1
         val endIndex = headers.indexOfFirst { it.contains(nameEnd) }.takeIf { it >= 0 } ?: headers.size
         return Pair(startIndex, endIndex)
@@ -180,7 +183,6 @@ class StatsAnalyzerService() {
             else -> ResultType.OTHER
         }
     }
-    enum class ResultType { WIN, DRAW, LOSS, OTHER }
 
     /**
      * Processes special cells such as discipline cells that contain multiple values

@@ -23,9 +23,9 @@
         <immediateFlush>true</immediateFlush>
         <prudent>true</prudent>
 
-        <!-- Accepts WARN or superior -->
+        <!-- Accepts INFO or superior -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
+            <level>INFO</level>
         </filter>
 
         <!-- Rolling policy and max file size -->

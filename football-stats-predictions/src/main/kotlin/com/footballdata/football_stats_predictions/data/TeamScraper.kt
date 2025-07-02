@@ -1,13 +1,14 @@
 package com.footballdata.football_stats_predictions.data
 
+import com.footballdata.football_stats_predictions.model.ResultType
 import com.footballdata.football_stats_predictions.model.TeamStats
 import com.footballdata.football_stats_predictions.model.TeamStatsBuilder
 import com.footballdata.football_stats_predictions.service.StatsAnalyzerService
 import com.footballdata.football_stats_predictions.utils.WebDriverUtils
 import org.openqa.selenium.By
-import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -129,7 +130,7 @@ class TeamScraper(
     /**
      * Sort each match result and count occurrences by type
      */
-    private fun countMatchResults(matchBoxes: List<WebElement>): Map<StatsAnalyzerService.ResultType, Int> {
+    private fun countMatchResults(matchBoxes: List<WebElement>): Map<ResultType, Int> {
         return matchBoxes
             .map { box ->
                 statsAnalyzerService.classifyMatchResult(box.getAttribute("class"))

@@ -12,11 +12,11 @@
 **Core**
 
 - Crear un test de arquitectura ✅
-- Auditoria de Web-Services
+- Auditoria de Web-Services ✅
   Loguear <timestamp,user,operación/metodo, parámetros, tiempoDeEjecicion> de los servicios publicados con Spring
-  utilizando Log4j/logback
-- Configurar https://www.baeldung.com/spring-boot-prometheus (Metricas)
-- Configurar https://www.baeldung.com/spring-boot-actuators (Endpoints de Monitoreo)
+  utilizando Log4j/logback ✅
+- Configurar https://www.baeldung.com/spring-boot-prometheus (Metricas) ✅
+- Configurar https://www.baeldung.com/spring-boot-actuators (Endpoints de Monitoreo) ✅
 
 **Funcionalidad**
 
