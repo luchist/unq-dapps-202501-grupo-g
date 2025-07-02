@@ -29,6 +29,9 @@ class TeamControllerTest {
     @InjectMocks
     private lateinit var teamController: TeamController
 
+    @Mock
+    private lateinit var authentication: Authentication
+
     @Test
     fun `getTeamComposition should return list of players`() {
         // Arrange
