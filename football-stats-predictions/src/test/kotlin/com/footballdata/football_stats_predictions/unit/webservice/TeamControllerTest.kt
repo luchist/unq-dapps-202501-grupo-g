@@ -38,7 +38,6 @@ class TeamControllerTest {
         val teamName = "Barcelona"
 
         val authentication: Authentication = Mockito.mock(Authentication::class.java)
-        `when`(authentication.name).thenReturn("123")
 
         val expectedPlayers = listOf(
             Player(
@@ -68,7 +67,6 @@ class TeamControllerTest {
             .thenThrow(RuntimeException("Service error"))
 
         val authentication: Authentication = Mockito.mock(Authentication::class.java)
-        `when`(authentication.name).thenReturn("123")
 
         // Act
         val result = teamController.getTeamComposition(teamName, authentication)
@@ -96,7 +94,6 @@ class TeamControllerTest {
         `when`(teamService.getScheduledMatches(teamName)).thenReturn(expectedMatches)
 
         val authentication: Authentication = Mockito.mock(Authentication::class.java)
-        `when`(authentication.name).thenReturn("123")
 
         // Act
         val result = teamController.getScheduledMatches(teamName, authentication)
@@ -114,7 +111,6 @@ class TeamControllerTest {
         `when`(teamService.getScheduledMatches(teamName)).thenReturn(expectedMatches)
 
         val authentication: Authentication = Mockito.mock(Authentication::class.java)
-        `when`(authentication.name).thenReturn("123")
 
         // Act
         val result = teamController.getScheduledMatches(teamName, authentication)
