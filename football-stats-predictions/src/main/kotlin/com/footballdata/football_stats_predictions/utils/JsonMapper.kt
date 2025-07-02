@@ -59,4 +59,9 @@ class JsonMapper {
         val matchesNode = rootNode.get("matches")
         return matchesNode.map { parseMatch(it) }
     }
+
+    fun parseTeamName(json: String): String {
+        val rootNode = mapper.readTree(json)
+        return rootNode.get("name").asText()
+    }
 }

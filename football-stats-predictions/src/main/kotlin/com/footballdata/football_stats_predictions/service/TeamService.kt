@@ -3,11 +3,7 @@ package com.footballdata.football_stats_predictions.service
 import com.footballdata.football_stats_predictions.data.FootballDataAPI
 import com.footballdata.football_stats_predictions.data.TeamScraper
 import com.footballdata.football_stats_predictions.model.*
-import com.footballdata.football_stats_predictions.repositories.ComparisonRepository
-import com.footballdata.football_stats_predictions.repositories.MatchPredictionRepository
-import com.footballdata.football_stats_predictions.repositories.PlayerRepository
-import com.footballdata.football_stats_predictions.repositories.TeamRepository
-import com.footballdata.football_stats_predictions.repositories.TeamStatsRepository
+import com.footballdata.football_stats_predictions.repositories.*
 import com.footballdata.football_stats_predictions.utils.PersistenceHelper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -35,12 +31,13 @@ class TeamService(
             return cachedTeam.players.toList()
         }
 
-        // If the team does not exist, fetch the players from the API
+        // If the team does not exist, fetch the players and team name from the API
         val teamComposition = footballDataAPI.getTeamComposition(teamName)
+        val teamNameStr = footballDataAPI.getTeamName(teamName)
 
         // Save the team to the database
         val team = TeamBuilder()
-            .withTeamName(teamName)
+            .withTeamName(teamNameStr)
             .withPlayers(teamComposition.toMutableList())
             .build()
         teamRepository.save(team)
@@ -109,9 +106,11 @@ class TeamService(
     fun compareTeams(localTeam: String, awayTeam: String): Map<String, Map<String, String>> {
         val comparison = persistenceHelper.getCachedOrFetch(
             repository = comparisonRepository,
-            findFunction = { comparisonRepository.findByComparisonTypeAndEntity1NameAndEntity2Name(
-                ComparisonType.TEAM, localTeam, awayTeam
-            )},
+            findFunction = {
+                comparisonRepository.findByComparisonTypeAndEntity1NameAndEntity2Name(
+                    ComparisonType.TEAM, localTeam, awayTeam
+                )
+            },
             fetchFunction = { teamScraper.compareTeamStatsWithDiff(localTeam, awayTeam) },
             entityMapper = { comparisonData ->
                 @Suppress("UNCHECKED_CAST")
